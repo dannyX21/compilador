@@ -1,11 +1,11 @@
 CONSTANTES = ('BOOL', 'CALL','CHAR', 'CONST_CHAR', 'CONST_STRING', 'DIF', 'DO',
     'ELSE', 'FLOAT', 'FOR', 'FUNCTION', 'ID', 'IF', 'IGU', 'INT', 'MAI', 'MAIN',
     'MAY', 'MEI', 'MEN', 'NUM', 'NUMF', 'READ', 'RETURN', 'STRING', 'THEN', 'TO',
-    'VOID', 'WHILE', 'WRITE', 'FALSE', 'TRUE',)
+    'VOID', 'WHILE', 'WRITE', 'FALSE', 'TRUE')
 
 PALABRAS_RESERVADAS = ('bool', 'call', 'char', 'do', 'else', 'float', 'for',
     'function', 'if', 'int', 'main', 'read', 'return', 'string', 'then', 'to',
-    'void', 'while', 'write', 'false', 'true',)
+    'void', 'while', 'write', 'false', 'true')
 
 TOKENS = {constante: token for (token, constante) in enumerate(CONSTANTES, 256)}
 
@@ -19,10 +19,9 @@ class Simbolo(object):
     def __repr__(self):
         return f"{self.lexema} ({self.token})"
 
-
 class Lexico(object):
     def __init__(self, codigo=""):
-        self.codigo = codigo + " "
+        self.codigo = codigo + " " 
         self.tabla_de_simbolos = []
         self.indice = -1
         self.inicio_lexema = 0
@@ -155,7 +154,6 @@ class Lexico(object):
             elif self.estado == 9:
                 if caracter.isalpha():
                     self.estado = 10
-
                 else:
                     self.estado = self.__fallo(self.inicio)
 
@@ -171,13 +169,11 @@ class Lexico(object):
                 if simbolo is None:
                     simbolo = Simbolo(token=TOKENS['ID'], lexema=lexema)
                     self.inserta_simbolo(simbolo=simbolo)
-
                 return simbolo
-
+            
             elif self.estado == 12:
                 if caracter.isdigit():
                     self.estado = 13
-
                 else:
                     self.estado = self.__fallo(self.inicio)
 
@@ -185,13 +181,10 @@ class Lexico(object):
                 caracter = self.__siguiente_caracter()
                 if caracter == '.':
                     self.estado = 14
-
                 elif caracter in 'Ee':
                     self.estado = 16
-
                 elif caracter.isdigit():
                     pass
-
                 else:
                     self.estado = 20
 
@@ -199,7 +192,6 @@ class Lexico(object):
                 caracter = self.__siguiente_caracter()
                 if caracter.isdigit():
                     self.estado = 15
-
                 else:
                     self.estado = self.__fallo(self.inicio)
 
@@ -207,10 +199,8 @@ class Lexico(object):
                 caracter = self.__siguiente_caracter()
                 if caracter in 'Ee':
                     self.estado = 16
-
                 elif caracter.isdigit():
                     pass
-
                 else:
                     self.estado = 21
 
@@ -218,10 +208,8 @@ class Lexico(object):
                 caracter = self.__siguiente_caracter()
                 if caracter in '+-':
                     self.estado = 17
-
                 elif caracter.isdigit():
                     self.estado = 18
-
                 else:
                     self.estado = self.__fallo(self.inicio)
 
@@ -229,7 +217,6 @@ class Lexico(object):
                 caracter = self.__siguiente_caracter()
                 if caracter.isdigit():
                     self.estado = 18
-
                 else:
                     self.estado = self.__fallo(self.inicio)
 
@@ -237,7 +224,6 @@ class Lexico(object):
                 caracter = self.__siguiente_caracter()
                 if caracter.isdigit():
                     pass
-
                 else:
                     self.estado = 19
 
@@ -252,6 +238,108 @@ class Lexico(object):
             elif self.estado == 21:
                 self.__retrocede_indice()
                 return Simbolo(token=TOKENS['NUMF'], lexema=self.__leer_lexema())
+
+            elif self.estado == 22:
+                if caracter == '"':
+                    self.estado = 23
+                else:
+                    self.estado = self.__fallo(self.inicio)
+
+            elif self.estado == 23:
+                caracter = self.__siguiente_caracter()
+                if caracter == '"':
+                    self.estado = 24
+                elif caracter == '\\':
+                    self.estado = 25
+                else:
+                    pass
+            
+            elif self.estado == 24:
+                return Simbolo(token=TOKENS['CONST_STRING'], lexema=self.__leer_lexema())
+
+            elif self.estado == 25:
+                caracter = self.__siguiente_caracter()
+                if caracter in r'atrn\"':
+                    self.estado = 23
+                else:
+                    self.estado = self.__fallo(self.inicio)
+
+            elif self.estado == 26:
+                if caracter == "'":
+                    self.estado = 27
+                else:
+                    self.estado = self.__fallo(self.inicio)
+
+            elif self.estado == 27:
+                caracter = self.__siguiente_caracter()
+                if caracter == '\\':
+                    self.estado = 30
+                else:
+                    self.estado = 28
+
+            elif self.estado == 28:
+                caracter = self.__siguiente_caracter()
+                if caracter == "'":
+                    self.estado = 29
+                else:
+                    self.estado = self.__fallo(self.inicio)
+            
+            elif self.estado == 29:
+                return Simbolo(token=TOKENS['CONST_CHAR'], lexema=self.__leer_lexema())
+
+            elif self.estado == 30:
+                caracter = self.__siguiente_caracter()
+                if caracter in r"atrn\'":
+                    self.estado = 28
+
+            elif self.estado == 31:
+                if caracter == '/':
+                    self.estado = 32
+                else:
+                    self.estado = self.__fallo(self.inicio)
+
+            elif self.estado == 32:
+                caracter = self.__siguiente_caracter()
+                if caracter == '/':
+                    self.estado = 33
+                elif caracter == '*':
+                    self.estado = 35
+                else:
+                    self.estado = self.__fallo(self.inicio)
+            
+            elif self.estado == 33:
+                caracter = self.__siguiente_caracter()
+                if caracter == '\n'or caracter is None:
+                    if caracter == '\n':
+                        self.numero_de_linea += 1
+                    self.estado = 34
+                else:
+                    pass
+
+            elif self.estado == 34:
+                self.__retrocede_indice()
+                self.__leer_lexema()
+
+            elif self.estado == 35:
+                caracter = self.__siguiente_caracter()
+                if caracter == '*':
+                    self.estado = 36
+                else:
+                    if caracter == '\n':
+                        self.numero_de_linea += 1
+                    pass
+
+            elif self.estado == 36:
+                caracter = self.__siguiente_caracter()
+                if caracter == '*':
+                    pass
+                elif caracter == '/':
+                    self.estado = 37
+                else:
+                    self.estado = 35
+            
+            elif self.estado == 37:
+                self.__leer_lexema()
 
             else:
                 if caracter in SIMBOLOS_PERMITIDOS:
@@ -281,7 +369,7 @@ class Lexico(object):
         los estados de aceptacion.
         """
         self.indice -= 1
-
+    
     def __deshacer_automata(self):
         """
         Si un automata falla en un estado intermedio, regresa el indice al
@@ -297,11 +385,14 @@ class Lexico(object):
         """
         if inicio == 0:
             self.inicio = 9
-
         elif inicio == 9:
             self.inicio = 12
-
         elif inicio == 12:
             self.inicio = 22
-
+        elif inicio == 22:
+            self.inicio = 26
+        elif inicio == 26:
+            self.inicio = 31
+        elif inicio == 31:
+            self.inicio = 38
         return self.inicio
