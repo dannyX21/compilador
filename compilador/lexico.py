@@ -253,6 +253,127 @@ class Lexico(object):
                 self.__retrocede_indice()
                 return Simbolo(token=TOKENS['NUMF'], lexema=self.__leer_lexema())
 
+            elif self.estado == 22:
+                if caracter == '"':
+                    self.estado = 23
+
+                else:
+                    self.estado = self.__fallo(self.inicio)
+
+            elif self.estado == 23:
+                caracter = self.__siguiente_caracter()
+                if caracter == '\\':
+                    self.estado = 24
+
+                elif caracter == '"':
+                    self.estado = 25
+
+                else:
+                    pass
+
+            elif self.estado == 24:
+                caracter = self.__siguiente_caracter()
+                if caracter in 'atrn"\\':
+                    self.estado = 23
+
+                else:
+                    self.__deshacer_automata()
+                    self.estado = self.__fallo(self.inicio)
+
+            elif self.estado == 25:
+                return Simbolo(token=TOKENS['CONST_STRING'], lexema=self.__leer_lexema())
+
+            elif self.estado == 26:
+                if caracter == '\'':
+                    self.estado = 27
+
+                else:
+                    self.estado = self.__fallo(self.inicio)
+
+            elif self.estado == 27:
+                caracter = self.__siguiente_caracter()
+                if caracter == '\\':
+                    self.estado = 28
+
+                elif caracter == '\'':
+                    self.__deshacer_automata()
+                    self.estado = self.__fallo(self.inicio)
+
+                else:
+                    self.estado = 29
+
+            elif self.estado == 28:
+                caracter = self.__siguiente_caracter()
+                if caracter in 'atrn\\\'':
+                    self.estado = 29
+
+                else:
+                    self.__deshacer_automata()
+                    self.estado = self.__fallo(self.inicio)
+
+            elif self.estado == 29:
+                caracter = self.__siguiente_caracter()
+                if caracter == '\'':
+                    self.estado = 30
+
+                else:
+                    self.__deshacer_automata()
+                    self.estado = self.__fallo(self.inicio)
+
+            elif self.estado == 30:
+                return Simbolo(token=TOKENS['CONST_CHAR'], lexema=self.__leer_lexema())
+
+            elif self.estado == 31:
+                if caracter == '/':
+                    self.estado = 32
+
+                else:
+                    self.estado = self.__fallo(self.inicio)
+
+            elif self.estado == 32:
+                caracter = self.__siguiente_caracter()
+                if caracter == '/':
+                    self.estado = 33
+                
+                elif caracter == '*':
+                    self.estado = 35
+
+                else:
+                    self.__deshacer_automata()
+                    self.estado = self.__fallo(self.inicio)
+
+            elif self.estado == 33:
+                caracter = self.__siguiente_caracter()
+                if caracter == '\n' or caracter == None:
+                    self.estado = 34
+
+                else:
+                    pass
+
+            elif self.estado == 34:
+                self.__retrocede_indice()
+                self.__leer_lexema()
+
+
+            elif self.estado == 35:
+                caracter = self.__siguiente_caracter()
+                if caracter == '*':
+                    self.estado = 36
+
+                else:
+                    pass
+
+            elif self.estado == 36:
+                caracter = self.__siguiente_caracter()
+                if caracter == '/':
+                    self.estado = 37
+
+                else:
+                    self.estado = 35
+
+            elif self.estado == 37:
+                self.__leer_lexema()
+
             else:
                 if caracter in SIMBOLOS_PERMITIDOS:
                     return Simbolo(token=ord(caracter), lexema=self.__leer_lexema())
@@ -290,7 +411,7 @@ class Lexico(object):
         """
         self.indice = self.inicio_lexema - 1
 
-    def __fallo(self, inicio):
+    def __fallo(self,inicio):
         """
         Regresa el valor del estado inicial del siguiente automata a probar
         cuando el automata anterior fallo.
@@ -303,5 +424,14 @@ class Lexico(object):
 
         elif inicio == 12:
             self.inicio = 22
+
+        elif inicio == 22:
+            self.inicio = 26
+
+        elif inicio == 26:
+            self.inicio = 31
+
+        elif inicio == 31:
+            self.inicio = 38
 
         return self.inicio
