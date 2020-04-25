@@ -256,121 +256,119 @@ class Lexico(object):
             elif self.estado == 22:
                 if caracter=='"':
                     self.estado = 23
-                else:
-                    self.estado = self.__fallo(self.inicio)
-
+                else: 
+                    self.estado=self.__fallo(self.inicio)
+            
             elif self.estado == 23:
-                caracter = self.__siguiente_caracter()
-                if caracter =='\\':
+                caracter=self.__siguiente_caracter()
+                if caracter == '\\':
                     self.estado = 24
-                elif caracter=='"':
-                    self.estado=25
+                elif caracter == '"':
+                    self.estado = 25
                 else:
                     pass
-
             elif self.estado == 24:
-                caracter = self.__siguiente_caracter()
-                if caracter in 'atrn\\"':
-                    self.estado = 23
+                caracter=self.__siguiente_caracter()
+                if caracter in r'atrn\"':
+                    self.estado=23
                 else:
-                    __deshacer_automata()
-                    self.estado = self.__fallo(self.inicio)
-
+                    self.estado=self.__fallo(self.inicio)
+            
             elif self.estado == 25:
-                return Simbolo(token=TOKENS['CONST_STRING'], lexema=self.__leer_lexema())
-            #Desde aqui comienzo a editar
+                return Simbolo(token=TOKENS['CONST_STRING'],lexema=self.__leer_lexema())
+            
             elif self.estado == 26:
-                if caracter=="'":
-                    self.estado = 27
+                if caracter == "'":
+                    self.estado=27
                 else:
-                    self.estado = self.__fallo(self.inicio)
+                    self.estado=self.__fallo(self.inicio)
 
             elif self.estado == 27:
-                caracter = self.__siguiente_caracter()
+                caracter=self.__siguiente_caracter()
                 if caracter =='\\':
-                    self.estado = 28
+                    self.estado=28
                 else:
-                    self.estado = 29
-
+                    self.estado=29
+            
             elif self.estado == 28:
-                caracter = self.__siguiente_caracter()
-                if caracter in "atrn\\'":
-                    self.estado = 29
+                caracter=self.__siguiente_caracter()
+                if caracter in r"atrn\'":
+                    self.estado=29
                 else:
-                    __deshacer_automata()
-                    self.estado = self.__fallo(self.inicio)
+                    self.estado=self.__fallo(self.inicio)
 
-            elif self.estado==29:
-                caracter = self.__siguiente_caracter()
-                if caracter =="'":
-                    self.estado = 30
+            elif self.estado == 29:
+                caracter=self.__siguiente_caracter()
+                if caracter == "'":
+                    self.estado=30
                 else:
-                    __deshacer_automata()
-                    self.estado = self.__fallo(self.inicio)
+                    self.estado=self.__fallo(self.inicio)
 
             elif self.estado == 30:
                 return Simbolo(token=TOKENS['CONST_CHAR'], lexema=self.__leer_lexema())
 
-            #De aqui comienza el comentario simple
-            elif self.estado==31:
-                if caracter=='/':
+            elif self.estado == 31:
+                if caracter == "/":
                     self.estado = 32
+                    
                 else:
                     self.estado = self.__fallo(self.inicio)
 
-            elif self.estado ==32:
+            elif self.estado == 32:
                 caracter = self.__siguiente_caracter()
-                if  caracter =='/':
+                if caracter == "/":
                     self.estado = 33
                 else:
-                    self.__retrocede_indice()
-                    self.__retrocede_indice()
-                    caracter = self.__siguiente_caracter()
-                    self.estado = self.__fallo(self.inicio)
+                    self.estado=36
 
             elif self.estado == 33:
                 caracter = self.__siguiente_caracter()
-                if caracter  == '\n':
-                    self.estado =34
+                if caracter == "\n":
+                    self.numero_de_linea += 1
+                    self.estado = 34
+                elif caracter is None:
+                    self.estado = 34 
+                    
                 else:
                     pass
 
-            elif self.estado==34:
-               self.__retrocede_indice()
-               self.__leer_lexema()
-
-            ###### Aqui termina comentario simple
+            elif self.estado == 34:
+                self.__retrocede_indice()
+                self.__leer_lexema()
+            
             elif self.estado == 35:
-                if caracter =='/':
+                if caracter == "/":
                     self.estado = 36
+                    
                 else:
                     self.estado = self.__fallo(self.inicio)
 
             elif self.estado == 36:
-                caracter = self.__siguiente_caracter()
-                if self.caracter=='*':
+                if caracter == "*":
                     self.estado = 37
+                    
                 else:
                     self.estado = self.__fallo(self.inicio)
 
             elif self.estado == 37:
-                caracter  = self.__siguiente_caracter()
-                if caracter == '*':
+                caracter = self.__siguiente_caracter()
+                if caracter == "*":
                     self.estado = 38
+                
+                elif caracter == "\n":
+                    self.numero_de_linea += 1
                 else:
                     pass
 
             elif self.estado == 38:
                 caracter = self.__siguiente_caracter()
-                if caracter =='/':
-                    self.estado=39
+                if caracter == "/":
+                    self.estado = 39
                 else:
-                    self.estado = 37
-
+                    self.estado=37
+            
             elif self.estado == 39:
                 self.__leer_lexema()
-            
-            
 
             else:
                 if caracter in SIMBOLOS_PERMITIDOS:
@@ -425,7 +423,7 @@ class Lexico(object):
 
         elif inicio == 22:
             self.inicio = 26
-
+        
         elif inicio == 26:
             self.inicio = 31
 
@@ -434,5 +432,6 @@ class Lexico(object):
 
         elif inicio == 35:
             self.inicio = 40
+        
 
         return self.inicio
