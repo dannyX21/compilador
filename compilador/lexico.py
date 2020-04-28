@@ -1,3 +1,5 @@
+from compilador.errores import Error, ColeccionError
+
 CONSTANTES = ('BOOL', 'CALL','CHAR', 'CONST_CHAR', 'CONST_STRING', 'DIF', 'DO',
     'ELSE', 'FLOAT', 'FOR', 'FUNCTION', 'ID', 'IF', 'IGU', 'INT', 'MAI', 'MAIN',
     'MAY', 'MEI', 'MEN', 'NUM', 'NUMF', 'READ', 'RETURN', 'STRING', 'THEN', 'TO',
@@ -21,7 +23,7 @@ class Simbolo(object):
 
 
 class Lexico(object):
-    def __init__(self, codigo=""):
+    def __init__(self, codigo="", errores=ColeccionError()):
         self.codigo = codigo + " "
         self.tabla_de_simbolos = []
         self.indice = -1
@@ -32,6 +34,8 @@ class Lexico(object):
         self.caracter = self.codigo[0]
         self.lexema = ""
         self.token = None
+        self.__errores = errores
+        self.errores = self.__errores.coleccion
         self.__cargar_palabras_reservadas()
 
     def inserta_simbolo(self, simbolo=None, token=None, lexema=None):
@@ -242,17 +246,13 @@ class Lexico(object):
                 else:
                     self.estado = 19
 
-            elif self.estado == 19:
+            elif self.estado == 19 or self.estado == 21:
                 self.__retrocede_indice()
                 return Simbolo(token=TOKENS['NUMF'], lexema=self.__leer_lexema())
 
             elif self.estado == 20:
                 self.__retrocede_indice()
                 return Simbolo(token=TOKENS['NUM'], lexema=self.__leer_lexema())
-
-            elif self.estado == 21:
-                self.__retrocede_indice()
-                return Simbolo(token=TOKENS['NUMF'], lexema=self.__leer_lexema())
 
             elif self.estado == 22:
                 caracter = self.__sync_caracter()
@@ -400,10 +400,13 @@ class Lexico(object):
                     return Simbolo(token=ord(caracter), lexema=self.__leer_lexema())
 
                 else:
-                    # TODO generar objeto de error en vez de enviar un mensaje.
                     self.estado = 0
-                    print("ln: %s. Error Lexico: Simbolo no permitido: '%s'" %
-                        (self.numero_de_linea, self.__leer_lexema())
+                    self.__errores.agregar(
+                        Error(
+                            tipo='LEXICO',
+                            num_linea=self.numero_de_linea,
+                            mensaje=f"Simbolo no permitido: '{self.__leer_lexema()}'"
+                        )
                     )
 
     def __leer_lexema(self):

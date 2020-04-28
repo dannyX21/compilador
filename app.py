@@ -1,6 +1,7 @@
 import json
 from flask import Flask, render_template, request, jsonify
 from compilador.lexico import Lexico
+from compilador.errores import ColeccionError
 
 app = Flask(__name__)
 
@@ -13,7 +14,8 @@ def tabla_de_simbolos(*args, **kwargs):
 @app.route('/compila/', methods=('post',))
 def compila(*args, **kwargs):
     json_data = json.loads(request.data)
-    lexico = Lexico(codigo=json_data.get('codigo', ''))
+    errores = ColeccionError()
+    lexico = Lexico(codigo=json_data.get('codigo', ''), errores=errores)
     componentes_lexicos = []
     while True:
         componente_lexico = lexico.siguiente_componente_lexico()
@@ -28,7 +30,16 @@ def compila(*args, **kwargs):
         else:
             break
 
-    return ({'componentes_lexicos': componentes_lexicos}, 200)
+    resultado = {'componentes_lexicos': componentes_lexicos}
+    resultado['errores'] = [
+        {
+            'tipo': e.tipo,
+            'num_linea': e.num_linea,
+            'mensaje': e.mensaje
+        } for e in lexico.errores
+    ]
+
+    return (resultado, 200)
 
 if __name__ == '__main__':
     app.run(debug=True)
