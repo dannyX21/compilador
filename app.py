@@ -5,6 +5,10 @@ from compilador.errores import ColeccionError
 
 app = Flask(__name__)
 
+@app.route('/')
+def index(methods=('get',)):
+    return render_template('index.html')
+
 @app.route('/tabla-de-simbolos/')
 def tabla_de_simbolos(*args, **kwargs):
     lexico = Lexico()
