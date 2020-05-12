@@ -5,6 +5,7 @@ const vm = new Vue({
     codigo: '',
     tokens: [],
     errores: [],
+    isDark: true,
     columnas: [
       {
         field: 'id',
