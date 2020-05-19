@@ -7,59 +7,49 @@
     <link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.5.94/css/materialdesignicons.min.css">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css">
     <link rel="stylesheet" href="https://unpkg.com/buefy/dist/buefy.min.css">
-    <link rel="stylesheet" href="static/index.css">
   </head>
   <body>
-    <div id="app" class="section" :class="{ dark: isDark }" v-cloak>
+    <div id="app" class="section is-dark" v-cloak>
       <div class="container">
-        <b-navbar :type="isDark ? 'is-dark' : 'is-light'" :spaced="true">
-          <template slot="brand">
-            <b-navbar-item tag="router-link" :to="{ path: '/'}">
-              <h1 class="title" :class="{ dark: isDark }"><b-icon icon="xml" size="is-large" type="is-info"></b-icon>Analizador Lexico</h1>
-            </b-navbar-item>
-          </template>
-        </b-navbar>
+        <h1 class="title">Analizador Lexico</h1>
+        <h2>Lenguajes y Automatas I</h2>
         <div class="columns">
           <div class="column is-6">
             <h3>Codigo Fuente</h3>
             <b-field>
-              <b-input type="textarea" v-model="codigo" @input="compila" :custom-class="isDark ? 'dark' : ''" placeholder="Codigo fuente" rows="10"></b-input>
+              <b-input type="textarea" v-model="codigo" @input="compila" placeholder="Codigo fuente" rows="10"></b-input>
             </b-field>
-            <transition name="fade" mode="out-in"></transition>
-              <div v-if="errores.length > 0">
-                <b-collapse class="card" animation="slide" aria-id="collapseId">
-                  <div slot="trigger" slot-scope="props" class="card-header" role="button" aria-controls="collapseId">
-                    <p class="card-header-title">
-                      Errores&nbsp;<b-tag type="is-danger"><% errores.length %></b-tag>
-                    </p>
-                    <a class="card-header-icon">
-                      <b-icon
-                          :icon="props.open ? 'menu-down' : 'menu-up'">
-                      </b-icon>
-                    </a>
-                  </div>
-                  <div class="card-content">
-                    <div class="content">
-                      <div style="max-height: 200px; overflow-y: scroll; overflow-x: hidden;">
-                        <b-message type="is-danger" size="is-small" v-for="error in errores" :key="error.id">
-                          ln: <% error.num_linea %> [<strong><% error.tipo %></strong>] <% error.mensaje %>
-                        </b-message>
-                      </div>
+            <div v-if="errores.length > 0">
+              <b-collapse class="card" animation="slide" aria-id="collapseId">
+                <div slot="trigger" slot-scope="props" class="card-header" role="button" aria-controls="collapseId">
+                  <p class="card-header-title">
+                    Errores&nbsp;<b-tag type="is-danger"><% errores.length %></b-tag>
+                  </p>
+                  <a class="card-header-icon">
+                    <b-icon
+                        :icon="props.open ? 'menu-down' : 'menu-up'">
+                    </b-icon>
+                  </a>
+                </div>
+                <div class="card-content">
+                  <div class="content">
+                    <div style="max-height: 200px; overflow-y: scroll; overflow-x: hidden;">
+                      <b-message type="is-danger" size="is-small" v-for="error in errores" :key="error.id">
+                        ln: <% error.num_linea %> [<strong><% error.tipo %></strong>] <% error.mensaje %>
+                      </b-message>
                     </div>
                   </div>
-                </b-collapse>
-              </div>
-            </transition>
+                </div>
+              </b-collapse>
+            </div>
           </div>
           <div class="column is-6">
-            <transition name="fade" mode="out-in">
-              <div v-if="tokens.length > 0">
-                <h3>Componentes Lexicos&nbsp;<b-tag type="is-primary"><% tokens.length || 0 %></b-tag></h3>
-                <div style="height: 600px; overflow-y: scroll; overflow-x: hidden;">
-                  <b-table :data="tokens" :bordered="true" :striped="true" :narrowed="true" :hoverable="true" :mobile-cards="false" :columns="columnas"></b-table>
-                </div>
+            <div v-if="tokens.length > 0">
+              <h3>Componentes Lexicos&nbsp;<b-tag type="is-primary"><% tokens.length || 0 %></b-tag></h3>
+              <div style="height: 600px; overflow-y: scroll; overflow-x: hidden;">
+                <b-table :data="tokens" :bordered="true" :striped="true" :narrowed="true" :hoverable="true" :mobile-cards="false" :columns="columnas"></b-table>
               </div>
-            </transition>
+            </div>
           </div>
         </div>
       </div>
