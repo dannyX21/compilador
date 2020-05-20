@@ -2,12 +2,17 @@ import json
 from flask import Flask, render_template, request, jsonify
 from compilador.lexico import Lexico
 from compilador.errores import ColeccionError
+from compilador.sintactico import Sintactico
 
 app = Flask(__name__)
 
 @app.route('/')
 def index(methods=('get',)):
     return render_template('index.html')
+
+@app.route('/expresion/')
+def expresion(methods=('get',)):
+    return render_template('expresion.html')
 
 @app.route('/tabla-de-simbolos/')
 def tabla_de_simbolos(*args, **kwargs):
@@ -43,6 +48,22 @@ def compila(*args, **kwargs):
         } for e in lexico.errores
     ]
 
+    return (resultado, 200)
+
+@app.route('/compila-expresion/', methods=('post',))
+def compila_expresion(*args, **kwargs):
+    json_data = json.loads(request.data)
+    sintactico = Sintactico(codigo=json_data.get('codigo', ''))
+    expresion = sintactico.EXPRESION()
+    resultado = {'expresion': expresion }
+    resultado['errores'] = [
+        {
+            'tipo': error.tipo,
+            'num_linea': error.num_linea,
+            'mensaje': error.mensaje
+        } for error in sintactico.errores.coleccion
+    ]
+    
     return (resultado, 200)
 
 if __name__ == '__main__':

@@ -1,17 +1,27 @@
 
 {% extends 'base.html' %}    
 {% block title %}
-  Lenguajes y Automatas I - Analizador Lexico
+  Lenguajes y Automatas I - Analizador Sintactico (Expresion)
 {% endblock %}
 {% block content %}
-  <h1 class="title">Analizador Lexico</h1>
+  <h1 class="title">Analizador Sintactico (Expresion)</h1>
   <h2>Lenguajes y Automatas I</h2>
   <div class="columns">
     <div class="column is-6">
-      <h3>Codigo Fuente</h3>
-      <b-field>
-        <b-input type="textarea" v-model="codigo" @input="compila" placeholder="Codigo fuente" rows="10"></b-input>
-      </b-field>
+      <br>
+      <div class="card">
+        <div class="card-header">
+          <p class="card-header-title">Codigo Fuente</p>
+        </div>
+        <div class="card-content">
+          <div class="content">
+            <b-field :type="expresionValida ? 'is-success' : 'is-danger'">
+              <b-input type="text" v-model="codigo" @input="compilaExpresion" placeholder="Escribe una Expresion" ref="codigoInput"></b-input>
+            </b-field>
+          </div>
+        </div>
+      </div>
+      <br>
       <div v-if="errores.length > 0">
         <b-collapse class="card" animation="slide" aria-id="collapseId">
           <div slot="trigger" slot-scope="props" class="card-header" role="button" aria-controls="collapseId">
@@ -34,14 +44,6 @@
             </div>
           </div>
         </b-collapse>
-      </div>
-    </div>
-    <div class="column is-6">
-      <div v-if="tokens.length > 0">
-        <h3>Componentes Lexicos&nbsp;<b-tag type="is-primary"><% tokens.length || 0 %></b-tag></h3>
-        <div style="height: 600px; overflow-y: scroll; overflow-x: hidden;">
-          <b-table :data="tokens" :bordered="true" :striped="true" :narrowed="true" :hoverable="true" :mobile-cards="false" :columns="columnas"></b-table>
-        </div>
       </div>
     </div>
   </div>

@@ -5,7 +5,7 @@ const vm = new Vue({
     codigo: '',
     tokens: [],
     errores: [],
-    isDark: true,
+    resultadoExpresion: false,
     columnas: [
       {
         field: 'id',
@@ -24,6 +24,11 @@ const vm = new Vue({
       }
     ]
   },
+  computed: {
+    expresionValida() {
+      return this.resultadoExpresion && this.errores.length === 0
+    }
+  },
   methods: {
     compila: _.debounce(function() {
       axios.post('/compila/', { codigo: this.codigo }, ).then((response) => {
@@ -36,6 +41,18 @@ const vm = new Vue({
           return error
         })
       })
+    }, 500),
+    compilaExpresion: _.debounce(function() {
+      axios.post('/compila-expresion/', { codigo: this.codigo }, ).then((response) => {
+        this.resultadoExpresion = response.data.expresion
+        this.errores = response.data.errores.map(function(error, indice) {
+          error['id'] = indice + 1
+          return error
+        })
+      })
     }, 500)
+  },
+  mount() {
+    this.$refs.codigoInput.input.focus()
   }
 })

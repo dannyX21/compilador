@@ -68,7 +68,6 @@ class Sintactico(object):
         elif self.EXPRESION_LOGICA():
             return True
 
-        self.__agregar_error(mensaje='Se esperaba una Expresion')
         return False
 
     #                A -> A                     a               | B
@@ -280,6 +279,7 @@ class Sintactico(object):
                 self.__compara(']')
                 return True
 
+            self.__agregar_error(mensaje='Se esperaba una Expresion')
             return False
 
         return True
