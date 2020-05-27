@@ -1,3 +1,5 @@
+from compilador.errores import Error, ColeccionError
+
 CONSTANTES = ('BOOL', 'CALL','CHAR', 'CONST_CHAR', 'CONST_STRING', 'DIF', 'DO',
     'ELSE', 'FLOAT', 'FOR', 'FUNCTION', 'ID', 'IF', 'IGU', 'INT', 'MAI', 'MAIN',
     'MAY', 'MEI', 'MEN', 'NUM', 'NUMF', 'READ', 'RETURN', 'STRING', 'THEN', 'TO',
@@ -21,7 +23,7 @@ class Simbolo(object):
 
 
 class Lexico(object):
-    def __init__(self, codigo=""):
+    def __init__(self, codigo="", errores=ColeccionError()):
         self.codigo = codigo + " "
         self.tabla_de_simbolos = []
         self.indice = -1
@@ -32,6 +34,8 @@ class Lexico(object):
         self.caracter = self.codigo[0]
         self.lexema = ""
         self.token = None
+        self.__errores = errores
+        self.errores = self.__errores.coleccion
         self.__cargar_palabras_reservadas()
 
     def inserta_simbolo(self, simbolo=None, token=None, lexema=None):
@@ -90,6 +94,7 @@ class Lexico(object):
         Regresa el siguiente componente lexico (Simbolo) encontrado en el codigo
         fuente.
         """
+        caracter = None
         while True:
             if self.estado == 0:
                 caracter = self.__siguiente_caracter()
@@ -111,7 +116,7 @@ class Lexico(object):
                     self.estado = 6
 
                 else:
-                    self.estado = self.__fallo(self.inicio)
+                    self.estado = self.__fallo()
 
             elif self.estado == 1:
                 caracter = self.__siguiente_caracter()
@@ -157,7 +162,7 @@ class Lexico(object):
                     self.estado = 10
 
                 else:
-                    self.estado = self.__fallo(self.inicio)
+                    self.estado = self.__fallo()
 
             elif self.estado == 10:
                 caracter = self.__siguiente_caracter()
@@ -179,7 +184,7 @@ class Lexico(object):
                     self.estado = 13
 
                 else:
-                    self.estado = self.__fallo(self.inicio)
+                    self.estado = self.__fallo()
 
             elif self.estado == 13:
                 caracter = self.__siguiente_caracter()
@@ -201,7 +206,7 @@ class Lexico(object):
                     self.estado = 15
 
                 else:
-                    self.estado = self.__fallo(self.inicio)
+                    self.estado = self.__fallo()
 
             elif self.estado == 15:
                 caracter = self.__siguiente_caracter()
@@ -223,7 +228,7 @@ class Lexico(object):
                     self.estado = 18
 
                 else:
-                    self.estado = self.__fallo(self.inicio)
+                    self.estado = self.__fallo()
 
             elif self.estado == 17:
                 caracter = self.__siguiente_caracter()
@@ -231,7 +236,7 @@ class Lexico(object):
                     self.estado = 18
 
                 else:
-                    self.estado = self.__fallo(self.inicio)
+                    self.estado = self.__fallo()
 
             elif self.estado == 18:
                 caracter = self.__siguiente_caracter()
@@ -241,7 +246,7 @@ class Lexico(object):
                 else:
                     self.estado = 19
 
-            elif self.estado == 19:
+            elif self.estado == 19 or self.estado == 21:
                 self.__retrocede_indice()
                 return Simbolo(token=TOKENS['NUMF'], lexema=self.__leer_lexema())
 
@@ -249,102 +254,99 @@ class Lexico(object):
                 self.__retrocede_indice()
                 return Simbolo(token=TOKENS['NUM'], lexema=self.__leer_lexema())
 
-            elif self.estado == 21:
-                self.__retrocede_indice()
-                return Simbolo(token=TOKENS['NUMF'], lexema=self.__leer_lexema())
-
             elif self.estado == 22:
+                caracter = self.__sync_caracter()
                 if caracter == '"':
                     self.estado = 23
 
                 else:
-                    self.estado = self.__fallo(self.inicio)
+                    self.estado = self.__fallo()
 
             elif self.estado == 23:
                 caracter = self.__siguiente_caracter()
                 if caracter == '\\':
                     self.estado = 24
 
-                elif caracter == '"':
+                elif  caracter == '"':
                     self.estado = 25
 
-                else:
+                elif caracter is not None:
                     pass
+
+                else:
+                    self.estado = self.__fallo()
 
             elif self.estado == 24:
                 caracter = self.__siguiente_caracter()
-                if caracter in 'atrn"\\':
+                if caracter in r'atrn\"':
                     self.estado = 23
 
                 else:
-                    self.__deshacer_automata()
-                    self.estado = self.__fallo(self.inicio)
+                    self.estado = self.__fallo()
 
             elif self.estado == 25:
                 return Simbolo(token=TOKENS['CONST_STRING'], lexema=self.__leer_lexema())
 
             elif self.estado == 26:
-                if caracter == '\'':
+                caracter = self.__sync_caracter()
+                if caracter == "'":
                     self.estado = 27
 
                 else:
-                    self.estado = self.__fallo(self.inicio)
+                    self.estado = self.__fallo()
 
             elif self.estado == 27:
                 caracter = self.__siguiente_caracter()
-                if caracter == '\\':
+                if caracter == "\\":
                     self.estado = 28
 
-                elif caracter == '\'':
-                    self.__deshacer_automata()
-                    self.estado = self.__fallo(self.inicio)
+                elif caracter is not None:
+                    self.estado = 29
 
                 else:
-                    self.estado = 29
+                    self.estado = self.__fallo()
 
             elif self.estado == 28:
                 caracter = self.__siguiente_caracter()
-                if caracter in 'atrn\\\'':
+                if caracter in r"atrn\'":
                     self.estado = 29
 
                 else:
-                    self.__deshacer_automata()
-                    self.estado = self.__fallo(self.inicio)
+                    self.estado = self.__fallo()
 
             elif self.estado == 29:
                 caracter = self.__siguiente_caracter()
-                if caracter == '\'':
+                if caracter == "'":
                     self.estado = 30
 
                 else:
-                    self.__deshacer_automata()
-                    self.estado = self.__fallo(self.inicio)
+                    self.estado = self.__fallo()
 
             elif self.estado == 30:
                 return Simbolo(token=TOKENS['CONST_CHAR'], lexema=self.__leer_lexema())
 
             elif self.estado == 31:
+                caracter = self.__sync_caracter()
                 if caracter == '/':
                     self.estado = 32
 
                 else:
-                    self.estado = self.__fallo(self.inicio)
+                    self.estado = self.__fallo()
 
             elif self.estado == 32:
                 caracter = self.__siguiente_caracter()
                 if caracter == '/':
                     self.estado = 33
-                
-                elif caracter == '*':
-                    self.estado = 35
 
                 else:
-                    self.__deshacer_automata()
-                    self.estado = self.__fallo(self.inicio)
+                    self.estado = self.__fallo()
 
             elif self.estado == 33:
                 caracter = self.__siguiente_caracter()
-                if caracter == '\n' or caracter == None:
+                if caracter == '\n' or caracter is None:
+                    if caracter == '\n':
+                        self.numero_de_linea += 1
+
                     self.estado = 34
 
                 else:
@@ -354,35 +356,57 @@ class Lexico(object):
                 self.__retrocede_indice()
                 self.__leer_lexema()
 
-
             elif self.estado == 35:
+                caracter = self.__sync_caracter()
+                if caracter == '/':
+                    self.estado = 36
+
+                else:
+                    self.estado = self.__fallo()
+
+            elif self.estado == 36:
                 caracter = self.__siguiente_caracter()
                 if caracter == '*':
-                    self.estado = 36
+                    self.estado = 37
+
+                else:
+                    self.estado = self.__fallo()
+
+            elif self.estado == 37:
+                caracter = self.__siguiente_caracter()
+                if caracter == '*':
+                    self.estado = 38
+
+                elif caracter == '\n':
+                    self.numero_de_linea += 1
 
                 else:
                     pass
 
-            elif self.estado == 36:
+            elif self.estado == 38:
                 caracter = self.__siguiente_caracter()
                 if caracter == '/':
-                    self.estado = 37
+                    self.estado = 39
 
                 else:
-                    self.estado = 35
+                    self.estado = 37
 
-            elif self.estado == 37:
+            elif self.estado == 39:
                 self.__leer_lexema()
 
             else:
+                caracter = self.__sync_caracter()
                 if caracter in SIMBOLOS_PERMITIDOS:
                     return Simbolo(token=ord(caracter), lexema=self.__leer_lexema())
 
                 else:
-                    # TODO generar objeto de error en vez de enviar un mensaje.
                     self.estado = 0
-                    print("ln: %s. Error Lexico: Simbolo no permitido: '%s'" %
-                        (self.numero_de_linea, self.__leer_lexema())
+                    self.__errores.agregar(
+                        Error(
+                            tipo='LEXICO',
+                            num_linea=self.numero_de_linea,
+                            mensaje=f"Simbolo no permitido: '{self.__leer_lexema()}'"
+                        )
                     )
 
     def __leer_lexema(self):
@@ -403,35 +427,38 @@ class Lexico(object):
         """
         self.indice -= 1
 
-    def __deshacer_automata(self):
+    def __sync_caracter(self):
         """
-        Si un automata falla en un estado intermedio, regresa el indice al
-        caracter previo al inicio_lexema, para procesar el primer caracter en
-        el siguiente automata.
+        Si un automata falla en un estado intermedio, establece el indice en la
+        posicion de inicio_lexema y regresa el caracter en esa posicion.
         """
-        self.indice = self.inicio_lexema - 1
+        self.indice = self.inicio_lexema
+        return self.codigo[self.indice]
 
-    def __fallo(self,inicio):
+    def __fallo(self):
         """
         Regresa el valor del estado inicial del siguiente automata a probar
         cuando el automata anterior fallo.
         """
-        if inicio == 0:
+        if self.inicio == 0:
             self.inicio = 9
 
-        elif inicio == 9:
+        elif self.inicio == 9:
             self.inicio = 12
 
-        elif inicio == 12:
+        elif self.inicio == 12:
             self.inicio = 22
 
-        elif inicio == 22:
+        elif self.inicio == 22:
             self.inicio = 26
 
-        elif inicio == 26:
+        elif self.inicio == 26:
             self.inicio = 31
 
-        elif inicio == 31:
-            self.inicio = 38
+        elif self.inicio == 31:
+            self.inicio = 35
+
+        elif self.inicio == 35:
+            self.inicio = 40
 
         return self.inicio
