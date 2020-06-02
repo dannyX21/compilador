@@ -460,5 +460,4 @@ class Lexico(object):
 
         elif self.inicio == 35:
             self.inicio = 40
-
         return self.inicio

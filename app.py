@@ -54,7 +54,7 @@ def compila(*args, **kwargs):
 def compila_expresion(*args, **kwargs):
     json_data = json.loads(request.data)
     sintactico = Sintactico(codigo=json_data.get('codigo', ''))
-    expresion = sintactico.EXPRESION()
+    expresion = sintactico.PROGRAMA()
     resultado = {'expresion': expresion }
     resultado['errores'] = [
         {
