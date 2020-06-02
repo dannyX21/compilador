@@ -1,0 +1,48 @@
+
+{% extends 'base.html' %}    
+{% block title %}
+  Lenguajes y Automatas I - Analizador Lexico
+{% endblock %}
+{% block content %}
+  <h1 class="title">Analizador Lexico</h1>
+  <h2>Lenguajes y Automatas I</h2>
+  <div class="columns">
+    <div class="column is-6">
+      <h3>Codigo Fuente</h3>
+      <b-field>
+        <b-input type="textarea" v-model="codigo" @input="compila" placeholder="Codigo fuente" rows="10"></b-input>
+      </b-field>
+      <div v-if="errores.length > 0">
+        <b-collapse class="card" animation="slide" aria-id="collapseId">
+          <div slot="trigger" slot-scope="props" class="card-header" role="button" aria-controls="collapseId">
+            <p class="card-header-title">
+              Errores&nbsp;<b-tag type="is-danger"><% errores.length %></b-tag>
+            </p>
+            <a class="card-header-icon">
+              <b-icon
+                  :icon="props.open ? 'menu-down' : 'menu-up'">
+              </b-icon>
+            </a>
+          </div>
+          <div class="card-content">
+            <div class="content">
+              <div style="max-height: 200px; overflow-y: scroll; overflow-x: hidden;">
+                <b-message type="is-danger" size="is-small" v-for="error in errores" :key="error.id">
+                  ln: <% error.num_linea %> [<strong><% error.tipo %></strong>] <% error.mensaje %>
+                </b-message>
+              </div>
+            </div>
+          </div>
+        </b-collapse>
+      </div>
+    </div>
+    <div class="column is-6">
+      <div v-if="tokens.length > 0">
+        <h3>Componentes Lexicos&nbsp;<b-tag type="is-primary"><% tokens.length || 0 %></b-tag></h3>
+        <div style="height: 600px; overflow-y: scroll; overflow-x: hidden;">
+          <b-table :data="tokens" :bordered="true" :striped="true" :narrowed="true" :hoverable="true" :mobile-cards="false" :columns="columnas"></b-table>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
