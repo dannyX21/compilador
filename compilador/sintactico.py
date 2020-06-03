@@ -44,6 +44,8 @@ class Sintactico(object):
     def __agregar_error(self, tipo='SINTACTICO', mensaje=None):
         self.errores.agregar(Error(tipo=tipo, num_linea=self.numero_de_linea, mensaje=mensaje))
 
+
+                
     def PARAMETRO(self):
         if self.TIPO():
             self.__compara(TOKENS['ID'])
@@ -52,7 +54,7 @@ class Sintactico(object):
         return False
 
     def TIPO(self):
-        if next((True for x in ('INT', 'BOOL', 'FLOAT', 'CHAR', 'STRING', 'VOID') if self.__verifica(TOKENS[x]))):
+        if next((True for x in ('INT', 'BOOL', 'FLOAT', 'CHAR', 'STRING', 'VOID') if self.__verifica(TOKENS[x])), False):
             self.__compara(self.complex.token)
             return True
 
@@ -283,3 +285,341 @@ class Sintactico(object):
             return False
 
         return True
+
+    
+    #****************************************Actividad*************************************
+
+    def FUNCIONES(self):
+        if self.FUNCION():
+            if self.FUNCIONES_PRIMA():
+                return True
+            
+        return False
+
+    def DEFINIR_FUNCIONES(self):
+        if self.FUNCIONES():
+            return True
+
+        return True
+    
+    def FUNCIONES_PRIMA(self):
+        if self.FUNCION():
+            if self.FUNCIONES_PRIMA():
+                return True
+                
+            return False
+        
+        return True
+
+    def VARIABLE(self):
+        if self.TIPO():
+            if self.IDENTIFICADORES():
+                return True
+
+            return False
+
+        return False
+
+    def VARIABLES(self):
+        if self.VARIABLE():
+            if self.VARIABLES_PRIMA():
+                return True
+
+        return False
+    
+    def VARIABLES_PRIMA(self):
+        if self.VARIABLE():
+            if self.VARIABLES_PRIMA():
+                return True
+
+            return False
+
+        return True
+
+    def DEFINIR_VARIABLES(self):
+        if self.VARIABLES():
+            return True
+        
+        return False
+
+    def IDENTIFICADOR(self):
+        self.__compara(TOKENS['ID'])
+        if self.ES_ARREGLO():
+            return True
+
+        return False
+
+    def IDENTIFICADORES(self):
+        if self.IDENTIFICADOR():
+            if self.IDENTIFICADORES_PRIMA():
+                return True
+            
+        return False
+
+    def IDENTIFICADORES_PRIMA(self):
+        if self.__verifica(','):
+            self.__compara(',')
+            if self.IDENTIFICADOR():
+                if self.IDENTIFICADORES_PRIMA():
+                    return True
+                
+                return False
+            
+            return False
+        
+        return True
+
+    def PROGRAMA(self):
+        if self.DEFINIR_VARIABLES():
+            if self.DEFINIR_FUNCIONES():
+                if self.PRINCIPAL():
+                    if self.complex is not None:
+                        self.__agregar_error(mensaje='Elemento despues de la funcion principal')
+                        return True
+
+                    return False
+                
+                return False
+
+            return False
+
+    def ES_ARREGLO(self):
+        if self.__verifica('['):
+            self.__compara(self.complex.token)
+            if self.__verifica(TOKENS['NUM']):
+                self.__compara(']')
+                return True
+
+            self.__agregar_error(mensaje='Se esperaba numero')
+            return False
+
+        return True
+
+    def PARAMETROS(self):
+        if self.PARAMETRO():
+            if self.PARAMETROS_PRIMA():
+                return True
+            
+            return False
+            
+        return False
+
+    def PARAMETROS_PRIMA(self):
+        if self.__verifica(','):
+            self.__compara(self.complex.token)
+            if self.PARAMETRO():
+                if self.PARAMETROS_PRIMA():
+                    return True
+                
+                return False
+            
+            return False
+        
+        return True
+
+    def PARAMETROS_FORMALES(self):
+        if self.PARAMETROS():
+            return True
+        
+        return True
+
+    def ORDEN(self):
+        if self.ASIGNACION() or self.DECISION() or self.ITERACION() or self.ENTRADA_SALIDA() or self.BLOQUE() or self.RETORNO():
+            return True
+        
+        return False
+
+    def ORDENES(self):
+        if self.ORDEN():
+            if self.ORDENES_PRIMA():
+                return True
+
+            return False
+            
+        return False
+    
+    def ORDENES_PRIMA(self):
+        if self.ORDEN():
+            if self.ORDENES_PRIMA():
+                return True
+                
+            return False
+        
+        return True
+
+    def BLOQUE(self):
+        if self.__verifica('{'):
+            self.__compara(self.complex.token)
+            if self.ORDENES():
+                self.__compara('}')
+                return True
+
+            self.__agregar_error(mensaje='Se esperaba una Expresion')
+            return False
+
+        return False
+
+    def CUERPO_FUNCION(self):
+        if self.BLOQUE():
+            return True
+
+        return False
+
+    def FUNCION(self):
+        if self.__verifica(TOKENS['FUNCTION']):
+            self.__compara(self.complex.token)
+            if self.TIPO():
+                self.__compara(TOKENS['ID'])
+                self.__compara('(')
+                if self.PARAMETROS_FORMALES():
+                    self.__compara(')')
+                    if self.DEFINIR_VARIABLES():
+                        if self.CUERPO_FUNCION():
+                            return True
+                    
+                        return False
+
+                    return False
+            
+                return False
+
+            return False
+
+        return False
+
+    def ASIGNACION(self):
+        if self.DESTINO():
+            self.__compara(TOKENS['IGU'])
+            if self.FUENTE():
+                self.__compara(';')
+                return True
+
+            self.__agregar_error(mensaje='Se esperaba una Expresion')
+            return False
+
+        return False
+
+    def DESTINO(self):
+        if self.__verifica(TOKENS['ID']):
+            self.__compara(self.complex.token)
+            if self.ELEMENTO_ARREGLO():
+                return True
+
+        return False
+
+    def FUENTE(self):
+        if self.EXPRESION():
+            return True
+        
+        self.__agregar_error(mensaje='Se esperaba una Expresion')
+        return False
+    
+    def DECISION(self):
+        if self.__compara(TOKENS['IF']):
+            self.__compara(self.complex.token)
+            self.__compara('(')
+            if self.EXPRESION():
+                self.__compara(')')
+                self.__compara(TOKENS['THEN'])
+                if self.ORDEN():
+                    if self.TIENE_ELSE():
+                        return True
+                    
+                    return False
+
+                self.__agregar_error(mensaje='Se esperaba una Expresion')
+                return False
+
+            return False
+        
+        return False
+
+    def TIENE_ELSE(self):
+        if self.__verifica(TOKENS['ELSE']):
+            self.__compara(self.complex.token)
+            if self.ORDEN():
+                return True
+
+            self.__agregar_error(mensaje='Se esperaba una Expresion')
+            return False
+
+        return True
+
+    def ITERACION(self):
+        if self.__verifica(TOKENS['FOR']):
+            self.__compara(self.complex.token)
+            if next((True for operador in ('ID', 'IGU', 'NUM', 'TO', 'NUM') if self.__verifica(TOKENS[operador]))):
+                self.__compara(self.complex.token)
+                if self.ORDEN():
+                    return True
+
+                return False
+
+            return False
+
+        elif self.__verifica(TOKENS['WHILE']):
+            self.__compara(self.complex.token)
+            self.__compara('(')
+            if self.EXPRESION_LOGICA():
+                self.__compara(')')
+                self.__compara(TOKENS['do'])
+                if self.ORDEN():
+                    return True
+
+                return False
+
+            return False
+
+        elif self.__verifica(TOKENS['DO']):
+            self.__compara(self.complex.token)
+            if self.ORDEN():
+                self.__compara(TOKENS['WHILE'])
+                self.__compara('(')
+                if self.EXPRESION_LOGICA():
+                    self.__compara(')')
+                    return True
+
+                self.__agregar_error(mensaje='Se esperaba una Expresion')
+                return False
+
+            return False
+
+        return False
+
+    def ENTRADA_SALIDA(self):
+        if self.__verifica(TOKENS['READ']):
+            self.__compara(self.complex.token)
+            self.__compara('(')
+            if self.DECISION():
+                self.__compara(')')
+                self.__compara(';')
+                return True
+                
+            return False
+
+        if self.__verifica(self.__verifica(TOKENS['WRITE'])):
+            self.__compara(self.complex.token)
+            self.__compara('(')
+            if self.EXPRESION():
+                self.__compara(')')
+                self.__compara(';')
+                return True
+
+            self.__agregar_error(mensaje='Se esperaba una Expresion')
+            return False
+                
+        return False
+
+    def RETORNO(self):
+        if self.__verifica(TOKENS['RETURN']):
+            self.__compara(self.complex.token)
+            if self.EXPRESION():
+                self.__compara(';')
+                return True
+
+            self.__agregar_error(mensaje='Se esperaba una Expresion')
+            return False
+
+        return False
+
+#************************************************************************************     
