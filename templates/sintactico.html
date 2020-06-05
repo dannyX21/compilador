@@ -1,13 +1,13 @@
 
 {% extends 'base.html' %}    
 {% block title %}
-  Lenguajes y Automatas I - Analizador Sintactico (Expresion)
+  Lenguajes y Automatas I - Analizador Sintactico
 {% endblock %}
 {% block content %}
-  <h1 class="title">Analizador Sintactico (Expresion)</h1>
+  <h1 class="title">Analizador Sintactico</h1>
   <h2>Lenguajes y Automatas I</h2>
   <div class="columns">
-    <div class="column is-6">
+    <div class="column is-8">
       <br>
       <div class="card">
         <div class="card-header">
@@ -15,8 +15,8 @@
         </div>
         <div class="card-content">
           <div class="content">
-            <b-field :type="expresionValida ? 'is-success' : 'is-danger'">
-              <b-input type="textarea" v-model="codigo" @input="compilaExpresion" placeholder="Escribe una Expresion" ref="codigoInput"></b-input>
+            <b-field :type="programaValido ? 'is-success' : 'is-danger'">
+              <b-input type="textarea" v-model="codigo" @input="compilaPrograma" placeholder="codigoFuente" ref="codigoInput"></b-input>
             </b-field>
           </div>
         </div>

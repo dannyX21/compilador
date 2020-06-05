@@ -6,6 +6,7 @@ const vm = new Vue({
     tokens: [],
     errores: [],
     resultadoExpresion: false,
+    resultadoPrograma: false,
     columnas: [
       {
         field: 'id',
@@ -27,6 +28,9 @@ const vm = new Vue({
   computed: {
     expresionValida() {
       return this.resultadoExpresion && this.errores.length === 0
+    },
+    programaValido() {
+      return this.resultadoPrograma && this.errores.length === 0
     }
   },
   methods: {
@@ -45,6 +49,15 @@ const vm = new Vue({
     compilaExpresion: _.debounce(function() {
       axios.post('/compila-expresion/', { codigo: this.codigo }, ).then((response) => {
         this.resultadoExpresion = response.data.expresion
+        this.errores = response.data.errores.map(function(error, indice) {
+          error['id'] = indice + 1
+          return error
+        })
+      })
+    }, 500),
+    compilaPrograma: _.debounce(function() {
+      axios.post('/compila-sintactico/', { codigo: this.codigo }, ).then((response) => {
+        this.resultadoPrograma = response.data.programa
         this.errores = response.data.errores.map(function(error, indice) {
           error['id'] = indice + 1
           return error

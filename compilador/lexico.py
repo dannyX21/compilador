@@ -10,6 +10,7 @@ PALABRAS_RESERVADAS = ('bool', 'call', 'char', 'do', 'else', 'float', 'for',
     'void', 'while', 'write', 'false', 'true',)
 
 TOKENS = {constante: token for (token, constante) in enumerate(CONSTANTES, 256)}
+TOKENS_INV = {token: constante for (constante, token) in TOKENS.items()}
 
 SIMBOLOS_PERMITIDOS = r"(){}[],;+-*/\%&|!"
 

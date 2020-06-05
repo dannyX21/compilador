@@ -14,6 +14,10 @@ def index(methods=('get',)):
 def expresion(methods=('get',)):
     return render_template('expresion.html')
 
+@app.route('/sintactico/')
+def sintactico(methods=('get',)):
+    return render_template('sintactico.html')
+
 @app.route('/tabla-de-simbolos/')
 def tabla_de_simbolos(*args, **kwargs):
     lexico = Lexico()
@@ -56,6 +60,22 @@ def compila_expresion(*args, **kwargs):
     sintactico = Sintactico(codigo=json_data.get('codigo', ''))
     expresion = sintactico.EXPRESION()
     resultado = {'expresion': expresion }
+    resultado['errores'] = [
+        {
+            'tipo': error.tipo,
+            'num_linea': error.num_linea,
+            'mensaje': error.mensaje
+        } for error in sintactico.errores.coleccion
+    ]
+    
+    return (resultado, 200)
+
+@app.route('/compila-sintactico/', methods=('post',))
+def compila_sintactico(*args, **kwargs):
+    json_data = json.loads(request.data)
+    sintactico = Sintactico(codigo=json_data.get('codigo', ''))
+    programa = sintactico.PROGRAMA()
+    resultado = {'programa': programa }
     resultado['errores'] = [
         {
             'tipo': error.tipo,
