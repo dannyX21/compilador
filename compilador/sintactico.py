@@ -1,4 +1,4 @@
-from compilador.lexico import Lexico, TOKENS, TOKENS_INV
+from compilador.lexico import Lexico, TOKENS, TOKENS_INV, Zonas
 from compilador.errores import Error, ColeccionError
 
 class Sintactico(object):
@@ -160,15 +160,24 @@ class Sintactico(object):
     def FUNCION(self):
         if self.__verifica(TOKENS['FUNCTION']):
             self.__compara(self.complex.token)
+            if self.lexico.fin_definicion_variables_globales is None:
+                self.lexico.marcar_posicion(posicion='fin_definicion_variables_globales')
+
+            self.lexico.zona_de_codigo = Zonas.DEF_VARIABLES_LOCALES
+            self.lexico.marcar_posicion(posicion='inicio_definicion_variables_locales')
             if self.TIPO():
                 self.__compara(TOKENS['ID'])
                 self.__compara('(')
                 if self.PARAMETROS_FORMALES():
                     self.__compara(')')
                     if self.DEFINIR_VARIABLES():
+                        self.lexico.marcar_posicion(posicion='fin_definicion_variables_locales')
+                        self.lexico.zona_de_codigo = Zonas.CUERPO_FUNCION_LOCAL
                         if self.CUERPO_FUNCION():
+                            self.lexico.zona_de_codigo = Zonas.DEF_VARIABLES_GLOBALES
                             return True
 
+        self.lexico.zona_de_codigo = Zonas.DEF_VARIABLES_GLOBALES
         return False
 
     def PARAMETROS_FORMALES(self):
@@ -604,6 +613,10 @@ class Sintactico(object):
     def PRINCIPAL(self):
         if self.__verifica(TOKENS['MAIN']):
             self.__compara(self.complex.token)
+            if self.lexico.fin_definicion_variables_globales is None:
+                self.lexico.marcar_posicion(posicion='fin_definicion_variables_globales')
+
+            self.lexico.zona_de_codigo = Zonas.CUERPO_PRINCIPAL
             self.__compara('(')
             if self.PARAMETROS_FORMALES():
                 self.__compara(')')
