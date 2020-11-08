@@ -37,6 +37,7 @@ def compila(*args, **kwargs):
                 {
                     "token": componente_lexico.token,
                     "lexema": componente_lexico.lexema,
+                    "codigo": componente_lexico.codigo
                 }
             )
 
@@ -51,7 +52,11 @@ def compila(*args, **kwargs):
             'mensaje': e.mensaje
         } for e in lexico.errores
     ]
-
+    resultado['tabla_de_simbolos'] = [{
+        'token': s.token,
+        'lexema': s.lexema,
+        'codigo': s.codigo
+    } for s in lexico.tabla_de_simbolos]
     return (resultado, 200)
 
 @app.route('/compila-expresion/', methods=('post',))
@@ -76,6 +81,11 @@ def compila_sintactico(*args, **kwargs):
     sintactico = Sintactico(codigo=json_data.get('codigo', ''))
     programa = sintactico.PROGRAMA()
     resultado = {'programa': programa }
+    resultado['tabla_de_simbolos'] = [{
+        'token': s.token,
+        'lexema': s.lexema,
+        'codigo': s.codigo
+    } for s in sintactico.lexico.tabla_de_simbolos]
     resultado['errores'] = [
         {
             'tipo': error.tipo,
@@ -87,4 +97,4 @@ def compila_sintactico(*args, **kwargs):
     return (resultado, 200)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run('localhost',5000)
