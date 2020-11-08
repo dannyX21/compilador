@@ -22,6 +22,10 @@ class Simbolo(object):
     def __repr__(self):
         return f"{self.lexema} ({self.token})"
 
+    @property
+    def codigo(self):
+        return TOKENS_INV.get(self.token, 'ERROR!') if self.token > 255 else chr(self.token)
+
 
 class Lexico(object):
     def __init__(self, codigo="", errores=ColeccionError()):

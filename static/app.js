@@ -5,6 +5,7 @@ const vm = new Vue({
     codigo: '',
     tokens: [],
     errores: [],
+    tablaSimbolos: [],
     resultadoExpresion: false,
     resultadoPrograma: false,
     columnas: [
@@ -19,11 +20,17 @@ const vm = new Vue({
         centered: true
       },
       {
+        field: 'codigo',
+        label: 'Codigo',
+        centered: true
+      },
+      {
         field: 'lexema',
         label: 'Lexema',
         centered: true
       }
-    ]
+    ],
+    activeTab: 0
   },
   computed: {
     expresionValida() {
@@ -39,6 +46,10 @@ const vm = new Vue({
         this.tokens = response.data.componentes_lexicos.map(function(componente, indice) {
           componente['id'] = indice + 1
           return componente
+        })
+        this.tablaSimbolos = response.data.tabla_de_simbolos.map(function(simbolo, indice) {
+          simbolo['id'] = indice + 1
+          return simbolo
         })
         this.errores = response.data.errores.map(function(error, indice) {
           error['id'] = indice + 1
@@ -58,6 +69,10 @@ const vm = new Vue({
     compilaPrograma: _.debounce(function() {
       axios.post('/compila-sintactico/', { codigo: this.codigo }, ).then((response) => {
         this.resultadoPrograma = response.data.programa
+        this.tablaSimbolos = response.data.tabla_de_simbolos.map(function(simbolo, indice) {
+          simbolo['id'] = indice + 1
+          return simbolo
+        })
         this.errores = response.data.errores.map(function(error, indice) {
           error['id'] = indice + 1
           return error

@@ -8,7 +8,6 @@
   <h2>Lenguajes y Automatas I</h2>
   <div class="columns">
     <div class="column is-8">
-      <br>
       <div class="card">
         <div class="card-header">
           <p class="card-header-title">Codigo Fuente</p>
@@ -44,6 +43,18 @@
             </div>
           </div>
         </b-collapse>
+      </div>
+    </div>
+    <div class="column is-4">
+      <div class="card-header">
+        <p class="card-header-title">Tabla de Simbolos&nbsp;<b-tag type="is-primary"><% tablaSimbolos.length || 0 %></b-tag></p>
+      </div>
+      <div class="card-content">
+        <div class="content">
+          <div style="height: 600px; overflow-y: scroll; overflow-x: hidden;">
+            <b-table :data="tablaSimbolos" :bordered="true" :striped="true" :narrowed="true" :hoverable="true" :mobile-cards="false" :columns="columnas"></b-table>
+          </div>
+        </div>
       </div>
     </div>
   </div>
