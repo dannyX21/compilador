@@ -79,9 +79,7 @@ class Lexico(object):
                 return next((s for s in self.tabla_de_simbolos[:self.fin_definicion_palabras_reservadas] if s.lexema == lexema), None)
 
         elif self.zona_de_codigo == Zonas.CUERPO_FUNCION_LOCAL:
-            print('en CUERPO_FUNCION_LOCAL')
             simbolo = next((s for s in self.tabla_de_simbolos[self.inicio_definicion_variables_locales:] if s.lexema == lexema), None)
-            print(f'lexeman: {lexema}, simbolo: {simbolo}')
             if simbolo is not None:
                 return simbolo
 
@@ -517,7 +515,6 @@ class Lexico(object):
         return self.inicio
 
     def marcar_posicion(self, posicion=None):
-        print(f'marcar {posicion}: {len(self.tabla_de_simbolos)}')
         if hasattr(self, posicion):
             setattr(self, posicion, len(self.tabla_de_simbolos))
 

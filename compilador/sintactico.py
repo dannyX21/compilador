@@ -22,7 +22,6 @@ class Sintactico(object):
         elif not isinstance(token, int):
             raise ValueError()
 
-        # print(f'{self.complex.token} == {token}? {self.complex.token == token}')
         if self.complex is not None:
             return self.complex.token == token
 
