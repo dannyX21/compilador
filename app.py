@@ -97,4 +97,4 @@ def compila_sintactico(*args, **kwargs):
     return (resultado, 200)
 
 if __name__ == '__main__':
-    app.run('localhost')
+    app.run(debug=True)
