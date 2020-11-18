@@ -612,6 +612,9 @@ class Sintactico(object):
     def PRINCIPAL(self):
         if self.__verifica(TOKENS['MAIN']):
             self.__compara(self.complex.token)
+            if self.lexico.fin_definicion_variables_globales is None:
+                self.lexico.marcar_posicion(posicion = 'fin_definicion_variables_globales')
+            self.lexico.zona_de_codigo = Zonas.CUERPO_PRINCIPAL
             self.__compara('(')
             if self.PARAMETROS_FORMALES():
                 self.__compara(')')

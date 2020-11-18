@@ -211,8 +211,8 @@ class Lexico(object):
                         self.__errores.agregar(
                             Error(
                                 tipo='SEMANTICO',
-                                num_linea = self.numero_de_linea,
-                                mensaje=f"La variables: '{lexema}' ya esta definida en el ambito actual."
+                                num_linea =self.numero_de_linea,
+                                mensaje=f"La variable: '{lexema}' ya esta definida en el ambito actual."
                             )
                         )
                 else:
