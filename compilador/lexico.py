@@ -507,7 +507,7 @@ class Lexico(object):
     def marcar_posicion(self, posicion=None):
         if hasattr(self, posicion):
             setattr(self, posicion, len(self.tabla_de_simbolos))
-
+//cambios
 class Zonas:
     DEF_VARIABLES_GLOBALES = 0
     DEF_VARIABLES_LOCALES = 1
