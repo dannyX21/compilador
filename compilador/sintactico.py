@@ -1,4 +1,4 @@
-from compilador.lexico import Lexico, TOKENS
+from compilador.lexico import Lexico, TOKENS, TOKENS_INV, Zonas
 from compilador.errores import Error, ColeccionError
 
 class Sintactico(object):
@@ -39,7 +39,7 @@ class Sintactico(object):
             self.siguiente_componente_lexico()
 
         else:
-            self.__agregar_error(tipo='SINTACTICO', mensaje=f"Se esperaba: '{chr(token) if token < 256 else token}'")
+            self.__agregar_error(tipo='SINTACTICO', mensaje=f"Se esperaba: '{chr(token) if token < 256 else TOKENS_INV[token]}'")
 
     def __agregar_error(self, tipo='SINTACTICO', mensaje=None):
         self.errores.agregar(Error(tipo=tipo, num_linea=self.numero_de_linea, mensaje=mensaje))
@@ -49,75 +49,71 @@ class Sintactico(object):
             if self.DEFINIR_FUNCIONES():
                 if self.PRINCIPAL():
                     return True
+
+                else:
+                    self.__agregar_error(tipo='SINTACTICO', mensaje='Se requiere cuerpo principal del programa')
+
         return False
 
     def DEFINIR_VARIABLES(self):
-        if self.VARIABLES():
-            return True
+        self.VARIABLES()
         return True
 
-           #    A    ->   A          a    |    B
-           #VARIABLES->VARIABLES VARIABLE | VARIABLE
-
-            #A-> B A'
-            #VARIABLES-> VARIABLE VARIABLES_PRIMA
-            #A'->a A' | e
-            #VARIABLES_PRIMA->VARIABLE VARIABLES_PRIMA | e
+    # VARIABLES -> VARIABLES VARIABLE | VARIABLE
+    # VARIABLES -> VARIABLE VARIABLES_PRIMA
+    # VARIABLES_PRIMA -> VARIABLE VARIABLES_PRIMA | ϵ
 
     def VARIABLES(self):
         if self.VARIABLE():
             if self.VARIABLES_PRIMA():
                 return True
+
         return False
 
     def VARIABLES_PRIMA(self):
         if self.VARIABLE():
             if self.VARIABLES_PRIMA():
                 return True
+
             return False
+
         return True
 
     def VARIABLE(self):
         if self.TIPO():
             if self.IDENTIFICADORES():
-                if self.__verifica(';'):
-                    self.__compara(self.complex.token)
-                    return True
-        return False
+                self.__compara(';')
+                return True
 
-    
-    def PARAMETRO(self):
-        if self.TIPO():
-            self.__compara(TOKENS['ID'])
-            return True
         return False
 
     def TIPO(self):
-        if next((True for x in ('INT', 'BOOL', 'FLOAT', 'CHAR', 'STRING', 'VOID') if self.__verifica(TOKENS[x])),False):
+        if next((True for x in ('INT', 'BOOL', 'FLOAT', 'CHAR', 'STRING', 'VOID') if self.__verifica(TOKENS[x])), False):
             self.__compara(self.complex.token)
             return True
+
         return False
 
-        #    A           ->       A               a       |      B
-        #IDENTIFICADORES -> IDENTIFICADORES,IDENTIFICADOR | IDENTIFICADOR
-        #    A           ->  B                        A'
-        #IDENTIFICADORES-> IDENTIFICADOR IDENTIFICADORES_PRIMA
-        #A'                   ->      a               A'             | e
-        #IDENTIFICADORES_PRIMA->,IDENTIFICADOR IDENTIFICADORES_PRIMA | e
+    # IDENTIFICADORES -> IDENTIFICADORES , IDENTIFICADOR | IDENTIFICADOR
+    # IDENTIFICADORES -> IDENTIFICADOR IDENTIFICADORES_PRIMA
+    # IDENTIFICADORES_PRIMA -> , IDENTIFICADOR IDENTIFICADORES_PRIMA | ϵ
 
     def IDENTIFICADORES(self):
         if self.IDENTIFICADOR():
             if self.IDENTIFICADORES_PRIMA():
                 return True
+
         return False
 
     def IDENTIFICADORES_PRIMA(self):
         if self.__verifica(','):
-            self.__compara(self.complex.token)
+            self.__compara(',')
             if self.IDENTIFICADOR():
                 if self.IDENTIFICADORES_PRIMA():
                     return True
+
             return False
+
         return True
 
     def IDENTIFICADOR(self):
@@ -125,83 +121,97 @@ class Sintactico(object):
             self.__compara(self.complex.token)
             if self.ES_ARREGLO():
                 return True
+
         return False
 
     def ES_ARREGLO(self):
         if self.__verifica('['):
-           self.__compara(self.complex.token)
-           self.__compara(TOKENS['NUM'])
-           self.__compara(']')
-           return True
+            self.__compara(self.complex.token)
+            self.__compara(TOKENS['NUM'])
+            self.__compara(']')
+            return True
+
         return True
 
     def DEFINIR_FUNCIONES(self):
-        if self.FUNCIONES():
-            return True
+        self.FUNCIONES()
         return True
 
-    #    A     ->       A      a     |   B
-    #FUNCIONES ->  FUNCIONES FUNCION |FUNCION 
-    #    A           ->  B                        A'
-    #FUNCIONES -> FUNCION FUNCIONES_PRIMA
-    #A'                   ->      a               A'             | e
-    #FUNCIONES_PRIMA -> FUNCION FUNCIONES_PRIMA |  e
+    # FUNCIONES -> FUNCIONES FUNCION | FUNCION
+    # FUNCIONES -> FUNCION FUNCIONES_PRIMA
+    # FUNCIONES_PRIMA -> FUNCION FUNCIONES_PRIMA | ϵ
 
     def FUNCIONES(self):
         if self.FUNCION():
             if self.FUNCIONES_PRIMA():
                 return True
+
         return False
 
     def FUNCIONES_PRIMA(self):
         if self.FUNCION():
             if self.FUNCIONES_PRIMA():
                 return True
+
+            return False
+
         return True
 
     def FUNCION(self):
         if self.__verifica(TOKENS['FUNCTION']):
             self.__compara(self.complex.token)
+            if self.lexico.fin_definicion_variables_globales is None:
+                self.lexico.marcar_posicion(posicion = 'fin_definicion_variables_globales')
+
+            self.lexico.zona_de_codigo = Zonas.DEF_VARIABLES_LOCALES
+            self.lexico.marcar_posicion(posicion = 'inicio_definicion_variables_locales')
             if self.TIPO():
                 self.__compara(TOKENS['ID'])
                 self.__compara('(')
                 if self.PARAMETROS_FORMALES():
                     self.__compara(')')
                     if self.DEFINIR_VARIABLES():
+                        self.lexico.marcar_posicion(posicion = 'fin_definicion_variables_locales')
+                        self.lexico.zona_de_codigo = Zonas.CUERPO_FUNCION_LOCAL
                         if self.CUERPO_FUNCION():
+                            self.lexico.zona_de_codigo =Zonas.DEF_VARIABLES_GLOBALES
                             return True
+        self.lexico.zona_de_codigo = Zonas.DEF_VARIABLES_GLOBALES
         return False
 
     def PARAMETROS_FORMALES(self):
-        if self.PARAMETROS():
-            return True
+        self.PARAMETROS()
         return True
-
- #    A     ->       A         a      |   B
- #PARAMETROS->  PARAMETROS ,PARAMETRO | PARAMETRO 
- #    A           ->  B                        A' 
- #PARAMETROS      ->  PARAMETRO              PARAMETROS_PRIMA
- #A'                   ->      a               A'             | e
- #PARAMETROS_PRIMA-> ,PARAMETRO PARAMETROS_PRIMA | e
 
     def PARAMETROS(self):
         if self.PARAMETRO():
             if self.PARAMETROS_PRIMA():
                 return True
+
         return False
 
     def PARAMETROS_PRIMA(self):
         if self.__verifica(','):
-            self.__compara(self.complex.token)
+            self.__compara(',')
             if self.PARAMETRO():
                 if self.PARAMETROS_PRIMA():
                     return True
+
             return False
+
         return True
+
+    def PARAMETRO(self):
+        if self.TIPO():
+            self.__compara(TOKENS['ID'])
+            return True
+
+        return False
 
     def CUERPO_FUNCION(self):
         if self.BLOQUE():
             return True
+
         return False
 
     def BLOQUE(self):
@@ -210,30 +220,33 @@ class Sintactico(object):
             if self.ORDENES():
                 self.__compara('}')
                 return True
+
         return False
 
-    #   A    ->      A      a  |  B
-    #ORDENES ->  ORDENES ORDEN | ORDEN 
-    #A->BA' 
-    #ORDENES->ORDEN ORDENES_PRIMA
-    #A'->aA'|e
-    #ORDENES_PRIMA->ORDEN ORDENES_PRIMA | e
+    # ORDENES -> ORDENES ORDEN | ORDEN
+    # ORDENES -> ORDEN ORDENES_PRIMA
+    # ORDENES_PRIMA -> ORDEN ORDENES_PRIMA | ϵ
 
     def ORDENES(self):
         if self.ORDEN():
             if self.ORDENES_PRIMA():
                 return True
+
         return False
-    
+
     def ORDENES_PRIMA(self):
         if self.ORDEN():
             if self.ORDENES_PRIMA():
                 return True
+
+            return False
+
         return True
 
     def ORDEN(self):
-        if self.ASIGNACION() or self.DECISION() or self.ITERACION() or self.ENTRADA_SALIDA() or self.BLOQUE() or self.RETORNO():
+        if any((self.ASIGNACION(), self.DECISION(), self.ITERACION(), self.ENTRADA_SALIDA(), self.BLOQUE(), self.RETORNO())):
             return True
+
         return False
 
     def ASIGNACION(self):
@@ -242,11 +255,34 @@ class Sintactico(object):
             if self.FUENTE():
                 self.__compara(';')
                 return True
+
         return False
+
+    def DESTINO(self):
+        if self.__verifica(TOKENS['ID']):
+            self.__compara(self.complex.token)
+            if self.ELEMENTO_ARREGLO():
+                return True
+
+        return False
+
+    def ELEMENTO_ARREGLO(self):
+        if self.__verifica('['):
+            self.__compara(self.complex.token)
+            if self.EXPRESION():
+                self.__compara(']')
+                return True
+
+            self.__agregar_error(mensaje='Se esperaba una Expresion')
+            return False
+
+        return True
 
     def FUENTE(self):
         if self.EXPRESION():
             return True
+
+        self.__agregar_error(tipo='SINTACTICO', mensaje='Se esperaba una expresion')
         return False
 
     def DECISION(self):
@@ -259,6 +295,13 @@ class Sintactico(object):
                 if self.ORDEN():
                     if self.TIENE_ELSE():
                         return True
+
+                else:
+                    self.__agregar_error(tipo='SINTACTICO', mensaje='Se esperaba una orden')
+
+            else:
+                self.__agregar_error(tipo='SINTACTICO', mensaje='Se esperaba una expresion')
+
         return False
 
     def TIENE_ELSE(self):
@@ -266,6 +309,10 @@ class Sintactico(object):
             self.__compara(self.complex.token)
             if self.ORDEN():
                 return True
+
+            self.__agregar_error(tipo='SINTACTICO', mensaje='Se esperaba una orden')
+            return False
+        
         return True
 
     def ITERACION(self):
@@ -273,30 +320,52 @@ class Sintactico(object):
             self.__compara(self.complex.token)
             self.__compara(TOKENS['ID'])
             self.__compara(TOKENS['IGU'])
-            self.__compara(TOKENS['NUM'])
-            self.__compara(TOKENS['TO'])
-            self.__compara(TOKENS['NUM'])
-            if self.ORDEN():
-                return True
+            if self.EXPRESION():
+                self.__compara(TOKENS['TO'])
+                if self.EXPRESION():
+                    if self.ORDEN():
+                        return True
+
+                    else:
+                        self.__agregar_error(tipo='SINTACTICO', mensaje='Se esperaba una orden')
+
+                else:
+                    self.__agregar_error(tipo='SINTACTICO', mensaje='Se esperaba una expresion')
+
+            else:
+                self.__agregar_error(tipo='SINTACTICO', mensaje='Se esperaba una expresion')
+
         elif self.__verifica(TOKENS['WHILE']):
-            self.__compara(self.__compara.token)
+            self.__compara(self.complex.token)
             self.__compara('(')
             if self.EXPRESION_LOGICA():
                 self.__compara(')')
                 self.__compara(TOKENS['DO'])
                 if self.ORDEN():
                     return True
+
+                else:
+                    self.__agregar_error(tipo='SINTACTICO', mensaje='Se esperaba una orden')
+
+            else:
+                self.__agregar_error(tipo='SINTACTICO', mensaje='Se esperaba una expresion')
+
         elif self.__verifica(TOKENS['DO']):
-            self.__compara(self.complex.token)
             if self.ORDEN():
                 self.__compara(TOKENS['WHILE'])
                 self.__compara('(')
                 if self.EXPRESION_LOGICA():
                     self.__compara(')')
                     return True
-        else:
-            return False
-    
+
+                else:
+                    self.__agregar_error(tipo='SINTACTICO', mensaje='Se esperaba una expresion')
+
+            else:
+                self.__agregar_error(tipo='SINTACTICO', mensaje='Se esperaba una orden')
+
+        return False
+
     def ENTRADA_SALIDA(self):
         if self.__verifica(TOKENS['READ']):
             self.__compara(self.complex.token)
@@ -305,6 +374,10 @@ class Sintactico(object):
                 self.__compara(')')
                 self.__compara(';')
                 return True
+
+            else:
+                self.__agregar_error(tipo='SINTACTICO', mensaje='Se esperaba un destino')
+
         elif self.__verifica(TOKENS['WRITE']):
             self.__compara(self.complex.token)
             self.__compara('(')
@@ -312,8 +385,11 @@ class Sintactico(object):
                 self.__compara(')')
                 self.__compara(';')
                 return True
-        else:
-            return False
+
+            else:
+                self.__agregar_error(tipo='SINTACTICO', mensaje='Se esperaba una expresion')
+
+        return False
 
     def RETORNO(self):
         if self.__verifica(TOKENS['RETURN']):
@@ -321,18 +397,12 @@ class Sintactico(object):
             if self.EXPRESION():
                 self.__compara(';')
                 return True
-        return False
 
-    def PRINCIPAL(self):
-        if self.__verifica(TOKENS['MAIN']):
-            self.__compara(self.complex.token)
-            self.__compara('(')
-            if self.PARAMETROS_FORMALES():
-                self.__compara(')')
-                if self.BLOQUE():
-                    return True
-        return False
+            else:
+                self.__agregar_error(tipo='SINTACTICO', mensaje='Se esperaba una expresion')
 
+        return False
+    
     def EXPRESION(self):
         if self.__verifica('('):
             self.__compara('(')
@@ -517,6 +587,9 @@ class Sintactico(object):
         if self.ACTUAL():
             if self.ACTUALES_PRIMA():
                 return True
+
+            return False
+
         return False
 
     def ACTUALES_PRIMA(self):
@@ -536,22 +609,21 @@ class Sintactico(object):
         self.EXPRESION()
         return True
 
-    def DESTINO(self):
-        if self.__verifica(TOKENS['ID']):
+    def PRINCIPAL(self):
+        if self.__verifica(TOKENS['MAIN']):
             self.__compara(self.complex.token)
-            if self.ELEMENTO_ARREGLO():
-                return True
+            if self.lexico.fin_definicion_variables_globales is None:
+                self.lexico.marcar_posicion(posicion = 'fin_definicion_variables_globales')
+
+            self.lexico.zona_de_codigo = Zonas.CUERPO_PRINCIPAL
+            self.__compara('(')
+            if self.PARAMETROS_FORMALES():
+                self.__compara(')')
+                if self.BLOQUE():
+                    return True
+
+                else:
+                    self.__agregar_error(tipo='SINTACTICO', mensaje='Se esperaba un bloque de codigo')
 
         return False
 
-    def ELEMENTO_ARREGLO(self):
-        if self.__verifica('['):
-            self.__compara(self.complex.token)
-            if self.EXPRESION():
-                self.__compara(']')
-                return True
-
-            self.__agregar_error(mensaje='Se esperaba una Expresion')
-            return False
-
-        return True
