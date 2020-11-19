@@ -1,4 +1,4 @@
-from compilador.errores import ColeccionError, Error
+from compilador.errores import ColeccionError, Error, Zonas
 from compilador.lexico import TOKENS, TOKENS_INV, Lexico
 
 
