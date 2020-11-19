@@ -627,3 +627,5 @@ class Sintactico(object):
                     self.__agregar_error(tipo='SINTACTICO', mensaje='Se esperaba un bloque de codigo')
 
         return False
+
+    
