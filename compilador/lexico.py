@@ -15,10 +15,9 @@ TOKENS_INV = {token: constante for (constante, token) in TOKENS.items()}
 SIMBOLOS_PERMITIDOS = r"(){}[],;+-*/\%&|!"
 
 class Simbolo(object):
-    def __init__(self, token=None, lexema=None, tipo=None):
+    def __init__(self, token=None, lexema=None):
         self.token = token
         self.lexema = lexema
-        self.tipo = tipo
 
     def __repr__(self):
         return f"{self.lexema} ({self.token})"
@@ -45,12 +44,11 @@ class Lexico(object):
         self.fin_definicion_variables_globales = None
         self.inicio_definicion_variables_locales = None
         self.fin_definicion_variables_locales = None
-        self.tipo_de_dato_actual = None
         self.__errores = errores
         self.errores = self.__errores.coleccion
         self.__cargar_palabras_reservadas()
 
-    def inserta_simbolo(self, simbolo=None, token=None, lexema=None, tipo=None):
+    def inserta_simbolo(self, simbolo=None, token=None, lexema=None):
         """
         Inserta un simbolo en la tabla de simbolos. Puede aceptar un simbolo,
         o bien, un token y lexema.
@@ -58,8 +56,8 @@ class Lexico(object):
         if simbolo:
             self.tabla_de_simbolos.append(simbolo)
 
-        elif token and lexema and tipo:
-            self.tabla_de_simbolos.append(Simbolo(token=token, lexema=lexema, tipo=tipo))
+        elif token and lexema:
+            self.tabla_de_simbolos.append(Simbolo(token=token, lexema=lexema))
 
         else:
             raise Exception("Debe proveer un Simbolo, o bien token y lexema!")
@@ -521,11 +519,3 @@ class Zonas:
     DEF_VARIABLES_LOCALES = 1
     CUERPO_FUNCION_LOCAL = 2
     CUERPO_PRINCIPAL = 3
-
-class TipoDato:
-    INT = 0
-    BOOL = 1
-    FLOAT = 2
-    CHAR = 3
-    STRING = 4
-    ARRAY = 5
