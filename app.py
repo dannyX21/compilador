@@ -6,6 +6,8 @@ from compilador.sintactico import Sintactico
 
 app = Flask(__name__)
 
+TIPOS = ['INT', 'BOOL', 'FLOAT', 'CHAR', 'STRING', 'ARRAY_INT', 'ARRAY_BOOL', 'ARRAY_FLOAT','ARRAY_CHAR','ARRAY_STRING', 'VOID']
+
 @app.route('/')
 def index(methods=('get',)):
     return render_template('index.html')
@@ -21,7 +23,7 @@ def sintactico(methods=('get',)):
 @app.route('/tabla-de-simbolos/')
 def tabla_de_simbolos(*args, **kwargs):
     lexico = Lexico()
-    simbolos = [{'token': s.token, 'lexema': s.lexema} for s in lexico.tabla_de_simbolos]
+    simbolos = [{'token': s.token, 'lexema': s.lexema, 'tipo': TIPOS[s.tipo] if s.tipo is not None else s.tipo} for s in lexico.tabla_de_simbolos]
     return ({'simbolos': simbolos}, 200)
 
 @app.route('/compila/', methods=('post',))
@@ -37,6 +39,7 @@ def compila(*args, **kwargs):
                 {
                     "token": componente_lexico.token,
                     "lexema": componente_lexico.lexema,
+                    "tipo": componente_lexico.tipo,
                     "codigo": componente_lexico.codigo
                 }
             )
@@ -55,6 +58,7 @@ def compila(*args, **kwargs):
     resultado['tabla_de_simbolos'] = [{
         'token': s.token,
         'lexema': s.lexema,
+        'tipo': TIPOS[s.tipo] if s.tipo is not None else s.tipo,
         'codigo': s.codigo
     } for s in lexico.tabla_de_simbolos]
     return (resultado, 200)
@@ -84,6 +88,7 @@ def compila_sintactico(*args, **kwargs):
     resultado['tabla_de_simbolos'] = [{
         'token': s.token,
         'lexema': s.lexema,
+        'tipo': TIPOS[s.tipo] if s.tipo is not None else s.tipo,
         'codigo': s.codigo
     } for s in sintactico.lexico.tabla_de_simbolos]
     resultado['errores'] = [
@@ -97,4 +102,4 @@ def compila_sintactico(*args, **kwargs):
     return (resultado, 200)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run('localhost')
