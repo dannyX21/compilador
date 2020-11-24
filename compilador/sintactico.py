@@ -1,4 +1,4 @@
-from compilador.lexico import Lexico, TOKENS, TOKENS_INV, Zonas
+from compilador.lexico import Lexico, TOKENS, TOKENS_INV, Zonas, TipoDato
 from compilador.errores import Error, ColeccionError
 
 class Sintactico(object):
@@ -6,6 +6,7 @@ class Sintactico(object):
         self.errores = ColeccionError()
         self.lexico = Lexico(codigo=codigo, errores=self.errores)
         self.complex = self.siguiente_componente_lexico()
+
 
     def siguiente_componente_lexico(self):
         self.complex = self.lexico.siguiente_componente_lexico()
@@ -28,6 +29,7 @@ class Sintactico(object):
 
         return False
 
+
     def __compara(self, token):
         if isinstance(token, str) and len(token) == 1:
             token = ord(token)
@@ -46,7 +48,9 @@ class Sintactico(object):
 
     def PROGRAMA(self):
         if self.DEFINIR_VARIABLES():
+        
             if self.DEFINIR_FUNCIONES():
+            
                 if self.PRINCIPAL():
                     return True
 
@@ -56,6 +60,7 @@ class Sintactico(object):
         return False
 
     def DEFINIR_VARIABLES(self):
+    
         self.VARIABLES()
         return True
 
@@ -83,14 +88,41 @@ class Sintactico(object):
         if self.TIPO():
             if self.IDENTIFICADORES():
                 self.__compara(';')
+                
                 return True
 
         return False
 
     def TIPO(self):
-        if next((True for x in ('INT', 'BOOL', 'FLOAT', 'CHAR', 'STRING', 'VOID') if self.__verifica(TOKENS[x])), False):
+        if self.__verifica(TOKENS['INT']):
+            self.lexico.tipo_de_dato_actual = TipoDato.INT
             self.__compara(self.complex.token)
+            
             return True
+
+        elif self.__verifica(TOKENS['BOOL']):
+            self.lexico.tipo_de_dato_actual = TipoDato.BOOL
+            self.__compara(self.complex.token)
+            
+            return True
+
+        elif self.__verifica(TOKENS['FLOAT']):
+            self.lexico.tipo_de_dato_actual = TipoDato.FLOAT
+            self.__compara(self.complex.token)
+            
+            return True
+
+        elif self.__verifica(TOKENS['CHAR']):
+            self.lexico.tipo_de_dato_actual = TipoDato.CHAR
+            self.__compara(self.complex.token)
+            
+            return True
+
+        elif self.__verifica(TOKENS['STRING']):
+             self.lexico.tipo_de_dato_actual = TipoDato.STRING
+             self.__compara(self.complex.token)
+             
+             return True
 
         return False
 
@@ -129,6 +161,7 @@ class Sintactico(object):
             self.__compara(self.complex.token)
             self.__compara(TOKENS['NUM'])
             self.__compara(']')
+            self.tipo_de_dato_actual+=TipoDato.ARRAY
             return True
 
         return True
@@ -186,6 +219,7 @@ class Sintactico(object):
     def PARAMETROS(self):
         if self.PARAMETRO():
             if self.PARAMETROS_PRIMA():
+            
                 return True
 
         return False
