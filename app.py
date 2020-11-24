@@ -18,11 +18,13 @@ def expresion(methods=('get',)):
 def sintactico(methods=('get',)):
     return render_template('sintactico.html')
 
+
 @app.route('/tabla-de-simbolos/')
 def tabla_de_simbolos(*args, **kwargs):
     lexico = Lexico()
-    simbolos = [{'token': s.token, 'lexema': s.lexema} for s in lexico.tabla_de_simbolos]
+    simbolos = [{'token': s.token, 'lexema': s.lexema, 'tipo': s.tipo} for s in lexico.tabla_de_simbolos]
     return ({'simbolos': simbolos}, 200)
+
 
 @app.route('/compila/', methods=('post',))
 def compila(*args, **kwargs):
@@ -37,12 +39,14 @@ def compila(*args, **kwargs):
                 {
                     "token": componente_lexico.token,
                     "lexema": componente_lexico.lexema,
-                    "codigo": componente_lexico.codigo
+                    "codigo": componente_lexico.codigo,
+                    "tipo": componente_lexico.tipo
                 }
             )
 
         else:
             break
+
 
     resultado = {'componentes_lexicos': componentes_lexicos}
     resultado['errores'] = [
@@ -55,9 +59,11 @@ def compila(*args, **kwargs):
     resultado['tabla_de_simbolos'] = [{
         'token': s.token,
         'lexema': s.lexema,
-        'codigo': s.codigo
+        'codigo': s.codigo,
+        'tipo': s.tipo
     } for s in lexico.tabla_de_simbolos]
     return (resultado, 200)
+
 
 @app.route('/compila-expresion/', methods=('post',))
 def compila_expresion(*args, **kwargs):
@@ -75,6 +81,7 @@ def compila_expresion(*args, **kwargs):
     
     return (resultado, 200)
 
+
 @app.route('/compila-sintactico/', methods=('post',))
 def compila_sintactico(*args, **kwargs):
     json_data = json.loads(request.data)
@@ -84,7 +91,8 @@ def compila_sintactico(*args, **kwargs):
     resultado['tabla_de_simbolos'] = [{
         'token': s.token,
         'lexema': s.lexema,
-        'codigo': s.codigo
+        'codigo': s.codigo,
+        'tipo': s.tipo
     } for s in sintactico.lexico.tabla_de_simbolos]
     resultado['errores'] = [
         {
@@ -97,4 +105,4 @@ def compila_sintactico(*args, **kwargs):
     return (resultado, 200)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run('localhost',5000)
