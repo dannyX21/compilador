@@ -88,9 +88,27 @@ class Sintactico(object):
         return False
 
     def TIPO(self):
-        if next((True for x in ('INT', 'BOOL', 'FLOAT', 'CHAR', 'STRING', 'VOID') if self.__verifica(TOKENS[x])), False):
+        if self.complex.token == TOKENS['INT']:
+            self-lexico.tipo_de_dato_actual = TipoData.INT
             self.__compara(self.complex.token)
             return True
+        elif self.complex.token == TOKENS['BOOL']:
+            self-lexico.tipo_de_dato_actual = TipoData.BOOL
+            self.__compara(self.complex.token)
+            return True
+        elif self.complex.token == TOKENS['FLOAT']:
+            self-lexico.tipo_de_dato_actual = TipoData.FLOAT
+            self.__compara(self.complex.token)
+            return True
+        elif self.complex.token == TOKENS['CHAR']:
+            self-lexico.tipo_de_dato_actual = TipoData.CHAR
+            self.__compara(self.complex.token)
+            return True
+        elif self.complex.token == TOKENS['STRING']:
+            self-lexico.tipo_de_dato_actual = TipoData.STRING
+            self.__compara(self.complex.token)
+            return True
+        
 
         return False
 
@@ -626,3 +644,4 @@ class Sintactico(object):
                     self.__agregar_error(tipo='SINTACTICO', mensaje='Se esperaba un bloque de codigo')
 
         return False
+
