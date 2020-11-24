@@ -28,7 +28,7 @@ const vm = new Vue({
         field: 'lexema',
         label: 'Lexema',
         centered: true
-      },
+      }
       {
         field: 'tipo',
         label: 'Tipo',
