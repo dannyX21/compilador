@@ -32,7 +32,7 @@ class Sintactico(object):
             token = ord(token)
 
         elif not isinstance(token, int):
-            raise ValueError()
+            raise ValueError() 
 
         if self.complex is not None and self.complex.token == token:
             self.siguiente_componente_lexico()
