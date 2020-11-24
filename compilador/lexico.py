@@ -22,6 +22,7 @@ class Simbolo(object):
 
     def __repr__(self):
         return f"{self.lexema} ({self.token})"
+        return f"{self.lexema} {self.tipo}"
 
     @property
     def codigo(self):
