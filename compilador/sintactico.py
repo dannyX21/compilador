@@ -1,4 +1,4 @@
-from compilador.lexico import Lexico, TOKENS, TOKENS_INV, Zonas
+from compilador.lexico import Lexico, TOKENS, TOKENS_INV, Zonas, TipoDato
 from compilador.errores import Error, ColeccionError
 
 class Sintactico(object):
@@ -88,7 +88,34 @@ class Sintactico(object):
         return False
 
     def TIPO(self):
-        if next((True for x in ('INT', 'BOOL', 'FLOAT', 'CHAR', 'STRING', 'VOID') if self.__verifica(TOKENS[x])), False):
+        if self.__verifica(TOKENS['INT']):
+            self.lexico.tipo_de_dato_actual = TipoDato.INT
+            self.__compara(self.complex.token)
+            return True
+
+        elif self.__verifica(TOKENS['BOOL']):
+            self.lexico.tipo_de_dato_actual = TipoDato.BOOL
+            self.__compara(self.complex.token)
+            return True
+
+
+        elif self.__verifica(TOKENS['FLOAT']):
+            self.lexico.tipo_de_dato_actual = TipoDato.FLOAT
+            self.__compara(self.complex.token)
+            return True
+
+        elif self.__verifica(TOKENS['CHAR']):
+            self.lexico.tipo_de_dato_actual = TipoDato.CHAR
+            self.__compara(self.complex.token)
+            return True
+
+        elif self.__verifica(TOKENS['STRING']):
+            self.lexico.tipo_de_dato_actual = TipoDato.STRING
+            self.__compara(self.complex.token)
+            return True
+
+        elif self.__verifica(TOKENS['VOID']):
+            self.lexico.tipo_de_dato_actual = TipoDato.VOID
             self.__compara(self.complex.token)
             return True
 
@@ -129,6 +156,7 @@ class Sintactico(object):
             self.__compara(self.complex.token)
             self.__compara(TOKENS['NUM'])
             self.__compara(']')
+            self.tipo_de_dato_actual+=TipoDato.ARRAY
             return True
 
         return True
@@ -616,7 +644,7 @@ class Sintactico(object):
             self.__compara(self.complex.token)
 
             if self.lexico.fin_definicion_variables_globales is None:
-                self.lexico.marcar_posicion(posicion='fin_definicion_variables_globales')
+                self.lexico.marcar_posicion(posicion = 'fin_definicion_variables_globales')
 
             self.lexico.zona_de_codigo = Zonas.CUERPO_PRINCIPAL
 
