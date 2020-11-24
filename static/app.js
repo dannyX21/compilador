@@ -8,7 +8,7 @@ const vm = new Vue({
     tablaSimbolos: [],
     resultadoExpresion: false,
     resultadoPrograma: false,
-    columnas: [
+     columnas: [
       {
         field: 'id',
         label: '#',
@@ -27,6 +27,11 @@ const vm = new Vue({
       {
         field: 'lexema',
         label: 'Lexema',
+        centered: true
+      },
+      {
+        field: 'tipo',
+        label: 'Tipo',
         centered: true
       }
     ],
