@@ -1,4 +1,4 @@
-const vm = new Vue({
+nst vm = new Vue({
   el: "#app",
   delimiters: ['<%', '%>'],
   data: {
@@ -27,11 +27,6 @@ const vm = new Vue({
       {
         field: 'lexema',
         label: 'Lexema',
-        centered: true
-      },
-      {
-        field: 'tipo',
-        label: 'Tipo',
         centered: true
       }
     ],
