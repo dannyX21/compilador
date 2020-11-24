@@ -1,4 +1,4 @@
-from compilador.lexico import Lexico, TOKENS, TOKENS_INV, Zonas
+from compilador.lexico import Lexico, TOKENS, TOKENS_INV, Zonas, TipoDato
 from compilador.errores import Error, ColeccionError
 
 class Sintactico(object):
@@ -22,6 +22,7 @@ class Sintactico(object):
         elif not isinstance(token, int):
             raise ValueError()
 
+        # print(f'{self.complex.token} == {token}? {self.complex.token == token}')
         if self.complex is not None:
             return self.complex.token == token
 
@@ -86,12 +87,31 @@ class Sintactico(object):
 
         return False
 
-    def TIPO(self, en_funcion=False):
-        if next((True for x in ('INT', 'BOOL', 'FLOAT', 'CHAR', 'STRING', 'VOID') if self.__verifica(TOKENS[x])), False):
-            if en_funcion:
-                self.lexico.zona_de_codigo = Zonas.DEF_FUNCION
+    def TIPO(self):
+        if self.__verifica(TOKENS['INT']):
+            self.lexico.tipo_de_dato_actual = TipoDato.INT
             self.__compara(self.complex.token)
             return True
+
+        elif self.__verifica(TOKENS['BOOL']):
+            self.lexico.tipo_de_dato_actual = TipoDato.BOOL
+            self.__compara(self.complex.token)
+            return True
+
+        elif self.__verifica(TOKENS['FLOAT']):
+            self.lexico.tipo_de_dato_actual = TipoDato.FLOAT
+            self.__compara(self.complex.token)
+            return True
+
+        elif self.__verifica(TOKENS['CHAR']):
+            self.lexico.tipo_de_dato_actual = TipoDato.CHAR
+            self.__compara(self.complex.token)
+            return True
+
+        elif self.__verifica(TOKENS['STRING']):
+             self.lexico.tipo_de_dato_actual = TipoDato.STRING
+             self.__compara(self.complex.token)
+             return True
 
         return False
 
@@ -130,6 +150,7 @@ class Sintactico(object):
             self.__compara(self.complex.token)
             self.__compara(TOKENS['NUM'])
             self.__compara(']')
+            self.tipo_de_dato_actual+=TipoDato.ARRAY
             return True
 
         return True
@@ -163,11 +184,10 @@ class Sintactico(object):
             self.__compara(self.complex.token)
             if self.lexico.fin_definicion_variables_globales is None:
                 self.lexico.marcar_posicion(posicion='fin_definicion_variables_globales')
-
-            if self.TIPO(en_funcion=True):
+            self.lexico.zona_de_codigo = Zonas.DEF_VARIABLES_LOCALES
+            self.lexico.marcar_posicion(posicion = 'inicio_definicion_variables_locales')
+            if self.TIPO():
                 self.__compara(TOKENS['ID'])
-                self.lexico.zona_de_codigo = Zonas.DEF_VARIABLES_LOCALES
-                self.lexico.marcar_posicion(posicion='inicio_definicion_variables_locales')
                 self.__compara('(')
                 if self.PARAMETROS_FORMALES():
                     self.__compara(')')
@@ -574,6 +594,7 @@ class Sintactico(object):
             self.__compara('(')
             if self.ACTUALES():
                 self.__compara(')')
+                
                 return True
 
             return False
@@ -587,7 +608,9 @@ class Sintactico(object):
 
     def ACTUALES(self):
         if self.ACTUAL():
+
             if self.ACTUALES_PRIMA():
+
                 return True
 
             return False
@@ -599,6 +622,7 @@ class Sintactico(object):
             self.__compara(',')
             if self.ACTUAL():
                 if self.ACTUALES_PRIMA():
+
                     return True
 
                 return False
@@ -615,8 +639,7 @@ class Sintactico(object):
         if self.__verifica(TOKENS['MAIN']):
             self.__compara(self.complex.token)
             if self.lexico.fin_definicion_variables_globales is None:
-                self.lexico.marcar_posicion(posicion='fin_definicion_variables_globales')
-
+                self.lexico.marcar_posicion(posicion = 'fin_definicion_variables_globales')
             self.lexico.zona_de_codigo = Zonas.CUERPO_PRINCIPAL
             self.__compara('(')
             if self.PARAMETROS_FORMALES():
@@ -628,4 +651,3 @@ class Sintactico(object):
                     self.__agregar_error(tipo='SINTACTICO', mensaje='Se esperaba un bloque de codigo')
 
         return False
-
