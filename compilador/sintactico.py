@@ -86,8 +86,10 @@ class Sintactico(object):
 
         return False
 
-    def TIPO(self):
+    def TIPO(self, en_funcion=False):
         if next((True for x in ('INT', 'BOOL', 'FLOAT', 'CHAR', 'STRING', 'VOID') if self.__verifica(TOKENS[x])), False):
+            if en_funcion:
+                self.lexico.zona_de_codigo = Zonas.DEF_FUNCION
             self.__compara(self.complex.token)
             return True
 
@@ -162,10 +164,10 @@ class Sintactico(object):
             if self.lexico.fin_definicion_variables_globales is None:
                 self.lexico.marcar_posicion(posicion='fin_definicion_variables_globales')
 
-            self.lexico.zona_de_codigo = Zonas.DEF_VARIABLES_LOCALES
-            self.lexico.marcar_posicion(posicion='inicio_definicion_variables_locales')
-            if self.TIPO():
+            if self.TIPO(en_funcion=True):
                 self.__compara(TOKENS['ID'])
+                self.lexico.zona_de_codigo = Zonas.DEF_VARIABLES_LOCALES
+                self.lexico.marcar_posicion(posicion='inicio_definicion_variables_locales')
                 self.__compara('(')
                 if self.PARAMETROS_FORMALES():
                     self.__compara(')')

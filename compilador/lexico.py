@@ -31,6 +31,7 @@ class Lexico(object):
     def __init__(self, codigo="", errores=ColeccionError()):
         self.codigo = codigo + " "
         self.tabla_de_simbolos = []
+        self.tabla_de_funciones = []
         self.indice = -1
         self.inicio_lexema = 0
         self.numero_de_linea = 1
@@ -62,6 +63,20 @@ class Lexico(object):
         else:
             raise Exception("Debe proveer un Simbolo, o bien token y lexema!")
 
+    def inserta_funcion(self, simbolo=None, lexema=None):
+        """
+        Inserta un identificador en la tabla de funciones. Puede aceptar un simbolo,
+        o bien, un lexema.
+        """
+        if simbolo:
+            self.tabla_de_funciones.append(simbolo)
+
+        elif lexema:
+            self.tabla_de_simbolos.append(Simbolo(token=TOKENS['ID'], lexema=lexema))
+
+        else:
+            raise Exception("Debe proveer un Simbolo, o bien un lexema!")
+
     def __buscar_simbolo(self, lexema=''):
         """
         Recibe un lexema y busca un simbolo que coincida con el lexema en la
@@ -69,6 +84,14 @@ class Lexico(object):
         """
         if self.zona_de_codigo == Zonas.DEF_VARIABLES_GLOBALES:    
             return next((s for s in self.tabla_de_simbolos if s.lexema == lexema), None)
+
+        elif self.zona_de_codigo == Zonas.DEF_FUNCION:
+            simbolo = next((s for s in self.tabla_de_simbolos[self.fin_definicion_palabras_reservadas:] if s.lexema == lexema), None)
+            if simbolo is not None:
+                return simbolo
+
+            else:
+                return next((s for s in self.tabla_de_funciones if s.lexema == lexema), None)
 
         elif self.zona_de_codigo == Zonas.DEF_VARIABLES_LOCALES:
             simbolo = next((s for s in self.tabla_de_simbolos[self.inicio_definicion_variables_locales:] if s.lexema == lexema), None)
@@ -83,11 +106,20 @@ class Lexico(object):
             if simbolo is not None:
                 return simbolo
 
+            simbolo = next((s for s in self.tabla_de_funciones if s.lexema == lexema), None)
+            if simbolo is not None:
+                return simbolo
+
             else:
                 return next((s for s in self.tabla_de_simbolos[:self.fin_definicion_variables_globales] if s.lexema == lexema), None)
 
         else:
-            return next((s for s in self.tabla_de_simbolos[:self.fin_definicion_variables_globales] if s.lexema == lexema), None)
+            simbolo =  next((s for s in self.tabla_de_simbolos[:self.fin_definicion_variables_globales] if s.lexema == lexema), None)
+            if simbolo is not None:
+                return simbolo
+
+            else:
+                return next((s for s in self.tabla_de_funciones if s.lexema == lexema), None)
 
     def __siguiente_caracter(self):
         """
@@ -215,6 +247,19 @@ class Lexico(object):
                                 tipo='SEMANTICO',
                                 num_linea=self.numero_de_linea,
                                 mensaje=f"La variable: '{lexema}' ya esta definida en el ambito actual."
+                            )
+                        )
+                elif self.zona_de_codigo == Zonas.DEF_FUNCION:
+                    if simbolo is None:
+                        simbolo = Simbolo(token=TOKENS['ID'], lexema=lexema)
+                        self.inserta_funcion(simbolo=simbolo)
+
+                    else:
+                        self.__errores.agregar(
+                            Error(
+                                tipo='SEMANTICO',
+                                num_linea=self.numero_de_linea,
+                                mensaje=f"Ya existe una variable o funcion llamada: '{lexema}'."
                             )
                         )
 
@@ -521,6 +566,7 @@ class Lexico(object):
 
 class Zonas:
     DEF_VARIABLES_GLOBALES = 0
-    DEF_VARIABLES_LOCALES = 1
-    CUERPO_FUNCION_LOCAL = 2
-    CUERPO_PRINCIPAL = 3
+    DEF_FUNCION = 1
+    DEF_VARIABLES_LOCALES = 2
+    CUERPO_FUNCION_LOCAL = 3
+    CUERPO_PRINCIPAL = 4
