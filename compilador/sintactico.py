@@ -143,10 +143,10 @@ class Sintactico(object):
 
     def ES_ARREGLO(self):
         if self.__verifica('['):
-            self.lexico.tipo_de_dato_actual+= TipoDato.ARRAY
             self.__compara(self.complex.token)
             self.__compara(TOKENS['NUM'])
             self.__compara(']')
+            self.lexico.tabla_de_simbolos[-1].tipo+= TipoDato.ARRAY
             return True
 
         return True
