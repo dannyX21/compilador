@@ -18,10 +18,12 @@ def expresion(methods=('get',)):
 def sintactico(methods=('get',)):
     return render_template('sintactico.html')
 
+TIPOS_DATO = ["INT", "BOOL", "FLOAT", "CHAR", "STRING", "VOID", "ARRAY_INT", "ARRAY_BOOL", "ARRAY_FLOAT", "ARRAY_CHAR", "ARRAY_ STRING"]
+
 @app.route('/tabla-de-simbolos/')
 def tabla_de_simbolos(*args, **kwargs):
     lexico = Lexico()
-    simbolos = [{'token': s.token, 'lexema': s.lexema, 'tipo': s.tipo} for s in lexico.tabla_de_simbolos]
+    simbolos = [{'token': s.token, 'lexema': s.lexema, 'tipo': TIPOS_DATO[s.tipo] if s.tipo is not None else s.tipo} for s in lexico.tabla_de_simbolos]
     return ({'simbolos': simbolos}, 200)
 
 @app.route('/compila/', methods=('post',))
@@ -87,7 +89,7 @@ def compila_sintactico(*args, **kwargs):
         'token': s.token,
         'lexema': s.lexema,
         'codigo': s.codigo,
-        'tipo': s.tipo
+        'tipo': TIPOS_DATO[s.tipo] if s.tipo is not None else s.tipo
     } for s in sintactico.lexico.tabla_de_simbolos]
     resultado['errores'] = [
         {
