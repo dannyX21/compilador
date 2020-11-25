@@ -113,11 +113,11 @@ class Sintactico(object):
             self.__compara(self.complex.token)
             return True
 
-        elif self.__verifica== TOKENS['ARRAY']:
-            self.lexico.tipo_de_dato_actual= TipoDato.ARRAY
-            self.__compara(TOKENS['NUM'])
-            self.__compara(self.complex.token)         
-            return True
+        #elif self.__verifica== TOKENS['ARRAY']:
+        #   self.lexico.tipo_de_dato_actual= TipoDato.ARRAY
+        #  self.__compara(TOKENS['NUM'])
+        # self.__compara(self.complex.token)         
+        #return True
 
         return False
 
