@@ -151,6 +151,8 @@ class Sintactico(object):
             self.__compara(TOKENS['NUM'])
             self.__compara(']')
             self.lexico.tipo_de_dato_actual+=TipoDato.ARRAY
+            ultimo_simbolo=self.lexico.tabla_de_simbolos[-1]
+            ultimo_simbolo.tipo = self.lexico.tipo_de_dato_actual
             return True
 
         return True
