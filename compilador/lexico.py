@@ -209,8 +209,7 @@ class Lexico(object):
                 simbolo = self.__buscar_simbolo(lexema=lexema)
                 if self.zona_de_codigo in (Zonas.DEF_VARIABLES_GLOBALES, Zonas.DEF_VARIABLES_LOCALES,):
                     if simbolo is None:
-                        TIPOS=['INT','BOOL','FLOAT','CHAR','STRING','ARRAY INT','ARRAY BOOL','ARRAY FLOAT','ARRAY CHAR','ARRAY STRING']
-                        simbolo = Simbolo(token=TOKENS['ID'], lexema=lexema,tipo=TIPOS[self.tipo_de_dato_actual])
+                        simbolo = Simbolo(token=TOKENS['ID'], lexema=lexema,tipo=self.tipo_de_dato_actual)
                         self.inserta_simbolo(simbolo=simbolo)
                     elif simbolo.token == TOKENS['ID']:
                         self.__errores.agregar(
