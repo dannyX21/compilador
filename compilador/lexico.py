@@ -11,7 +11,6 @@ PALABRAS_RESERVADAS = ('bool', 'call', 'char', 'do', 'else', 'float', 'for',
 
 TOKENS = {constante: token for (token, constante) in enumerate(CONSTANTES, 256)}
 TOKENS_INV = {token: constante for (constante, token) in TOKENS.items()}
-TIPOS = ['int','bool','float','char','string','array']
 
 SIMBOLOS_PERMITIDOS = r"(){}[],;+-*/\%&|!"
 
@@ -208,7 +207,7 @@ class Lexico(object):
                 tipo = self.tipo_de_dato_actual
                 if self.zona_de_codigo in (Zonas.DEF_VARIABLES_GLOBALES,Zonas.DEF_VARIABLES_LOCALES,):
                     if simbolo is None:
-                        simbolo = Simbolo(token=TOKENS['ID'], lexema=lexema,tipo=TIPOS[tipo])
+                        simbolo = Simbolo(token=TOKENS['ID'], lexema=lexema,tipo=tipo)
                         self.inserta_simbolo(simbolo=simbolo)
 
                     elif simbolo.token == TOKENS['ID']:
