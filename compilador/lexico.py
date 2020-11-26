@@ -58,7 +58,7 @@ class Lexico(object):
         if simbolo:
             self.tabla_de_simbolos.append(simbolo)
 
-        elif token and lexema:
+        elif token and lexema and tipo:
             self.tabla_de_simbolos.append(Simbolo(token=token, lexema=lexema, tipo=tipo))
 
         else:
@@ -207,8 +207,7 @@ class Lexico(object):
                 simbolo = self.__buscar_simbolo(lexema = lexema)
                 if self.zona_de_codigo in (Zonas.DEF_VARIABLES_GLOBALES,Zonas.DEF_VARIABLES_LOCALES,):
                     if simbolo is None:
-                        TIPO_DATO = ["INT", "BOOL", "FLOAT", "CHAR", "STRING", "VOID", "ARRAY_INT", "ARRAY_BOOL", "ARRAY_FLOAT", "ARRAY_CHAR", "ARRAY_ STRING"]
-                        simbolo = Simbolo(token = TOKENS['ID'], lexema = lexema, tipo=TIPO_DATO[self.tipo_de_dato_actual] if self.tipo_de_dato_actual is not None else self.tipo_de_dato_actual)
+                        simbolo = Simbolo(token = TOKENS['ID'], lexema = lexema, tipo=self.tipo_de_dato_actual)
                         self.inserta_simbolo(simbolo = simbolo)
 
                     elif simbolo.token == TOKENS['ID']:
