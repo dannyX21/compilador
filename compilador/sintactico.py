@@ -156,7 +156,9 @@ class Sintactico(object):
             self.__compara(self.complex.token)
             self.__compara(TOKENS['NUM'])
             self.__compara(']')
-            self.tipo_de_dato_actual+=TipoDato.ARRAY
+            self.lexico.tipo_de_dato_actual += TipoDato.ARRAY
+            ultimo_simbolo = self.lexico.tabla_de_simbolos[-1]
+            ultimo_simbolo.tipo = self.lexico.tipo_de_dato_actual
             return True
 
         return True
@@ -658,3 +660,4 @@ class Sintactico(object):
                     self.__agregar_error(tipo='SINTACTICO', mensaje='Se esperaba un bloque de codigo')
 
         return False
+
