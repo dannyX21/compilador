@@ -9,23 +9,54 @@ PALABRAS_RESERVADAS = ('bool', 'call', 'char', 'do', 'else', 'float', 'for',
     'function', 'if', 'int', 'main', 'read', 'return', 'string', 'then', 'to',
     'void', 'while', 'write', 'false', 'true',)
 
+TIPOS = {
+    'void': 0,
+    'int': 1,
+    'bool': 2,
+    'float': 3,
+    'char': 4,
+    'string': 5
+}
+
 TOKENS = {constante: token for (token, constante) in enumerate(CONSTANTES, 256)}
 TOKENS_INV = {token: constante for (constante, token) in TOKENS.items()}
+TIPOS_INV = {val: key for (key, val) in TIPOS.items()}
+ARRAY_CONST = len(TIPOS)
 
 SIMBOLOS_PERMITIDOS = r"(){}[],;+-*/\%&|!"
 
 class Simbolo(object):
-    def __init__(self, token=None, lexema=None):
+    def __init__(self, token=None, lexema=None, tipo=None):
         self.token = token
         self.lexema = lexema
+        self.tipo = tipo
 
     def __repr__(self):
-        return f"{self.lexema} ({self.token})"
+        tipo = f': {self.codigo_tipo}' if self.tipo else ''
+        return f'{self.lexema} ({self.codigo}){tipo}'
 
     @property
     def codigo(self):
-        return TOKENS_INV.get(self.token, 'ERROR!') if self.token > 255 else chr(self.token)
+        if self.token < 256:
+            return chr(self.token)
 
+        if self.token in TOKENS_INV:
+            return TOKENS_INV[self.token]
+        
+        raise ValueError('Valor invalido para token!')
+
+    @property
+    def codigo_tipo(self):
+        if self.tipo is None:
+            return '-'
+
+        if self.tipo >= 0 and self.tipo < ARRAY_CONST:
+            return TIPOS_INV[self.tipo]
+
+        if self.tipo < ARRAY_CONST * 2:
+            return f'{TIPOS_INV[self.tipo - ARRAY_CONST]} array'
+
+        raise ValueError('Valor invalido para tipo!')
 
 class Lexico(object):
     def __init__(self, codigo="", errores=ColeccionError()):
@@ -45,11 +76,12 @@ class Lexico(object):
         self.fin_definicion_variables_globales = None
         self.inicio_definicion_variables_locales = None
         self.fin_definicion_variables_locales = None
+        self.tipo_de_dato_actual = None
         self.__errores = errores
         self.errores = self.__errores.coleccion
         self.__cargar_palabras_reservadas()
 
-    def inserta_simbolo(self, simbolo=None, token=None, lexema=None):
+    def inserta_simbolo(self, simbolo=None, token=None, lexema=None, tipo=None):
         """
         Inserta un simbolo en la tabla de simbolos. Puede aceptar un simbolo,
         o bien, un token y lexema.
@@ -58,12 +90,12 @@ class Lexico(object):
             self.tabla_de_simbolos.append(simbolo)
 
         elif token and lexema:
-            self.tabla_de_simbolos.append(Simbolo(token=token, lexema=lexema))
+            self.tabla_de_simbolos.append(Simbolo(token=token, lexema=lexema, tipo=tipo))
 
         else:
-            raise Exception("Debe proveer un Simbolo, o bien token y lexema!")
+            raise ValueError("Debe proveer un Simbolo, o bien token y lexema!")
 
-    def inserta_funcion(self, simbolo=None, lexema=None):
+    def inserta_funcion(self, simbolo=None, lexema=None, tipo=None):
         """
         Inserta un identificador en la tabla de funciones. Puede aceptar un simbolo,
         o bien, un lexema.
@@ -72,10 +104,10 @@ class Lexico(object):
             self.tabla_de_funciones.append(simbolo)
 
         elif lexema:
-            self.tabla_de_simbolos.append(Simbolo(token=TOKENS['ID'], lexema=lexema))
+            self.tabla_de_simbolos.append(Simbolo(token=TOKENS['ID'], lexema=lexema, tipo=tipo))
 
         else:
-            raise Exception("Debe proveer un Simbolo, o bien un lexema!")
+            raise ValueError("Debe proveer un Simbolo, o bien un lexema!")
 
     def __buscar_simbolo(self, lexema=''):
         """
@@ -238,7 +270,15 @@ class Lexico(object):
                 simbolo = self.__buscar_simbolo(lexema=lexema)
                 if self.zona_de_codigo in (Zonas.DEF_VARIABLES_GLOBALES, Zonas.DEF_VARIABLES_LOCALES,):
                     if simbolo is None:
-                        simbolo = Simbolo(token=TOKENS['ID'], lexema=lexema)
+                        simbolo = Simbolo(token=TOKENS['ID'], lexema=lexema, tipo=self.tipo_de_dato_actual)
+                        if simbolo.tipo == TIPOS['void']:
+                            self.__errores.agregar(
+                            Error(
+                                tipo='SEMANTICO',
+                                num_linea=self.numero_de_linea,
+                                mensaje=f"No es posible definir una variable de tipo 'void'."
+                            )
+                        )
                         self.inserta_simbolo(simbolo=simbolo)
 
                     elif simbolo.token == TOKENS['ID']:
@@ -251,7 +291,7 @@ class Lexico(object):
                         )
                 elif self.zona_de_codigo == Zonas.DEF_FUNCION:
                     if simbolo is None:
-                        simbolo = Simbolo(token=TOKENS['ID'], lexema=lexema)
+                        simbolo = Simbolo(token=TOKENS['ID'], lexema=lexema, tipo=self.tipo_de_dato_actual)
                         self.inserta_funcion(simbolo=simbolo)
 
                     else:
@@ -562,6 +602,9 @@ class Lexico(object):
     def marcar_posicion(self, posicion=None):
         if hasattr(self, posicion):
             setattr(self, posicion, len(self.tabla_de_simbolos))
+
+    def convertir_en_arreglo(self):
+        self.tabla_de_simbolos[-1].tipo += ARRAY_CONST
 
 
 class Zonas:

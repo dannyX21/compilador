@@ -1,4 +1,4 @@
-from compilador.lexico import Lexico, TOKENS, TOKENS_INV, Zonas
+from compilador.lexico import Lexico, TOKENS, TOKENS_INV, Zonas, TIPOS
 from compilador.errores import Error, ColeccionError
 
 class Sintactico(object):
@@ -87,7 +87,9 @@ class Sintactico(object):
         return False
 
     def TIPO(self, en_funcion=False):
-        if next((True for x in ('INT', 'BOOL', 'FLOAT', 'CHAR', 'STRING', 'VOID') if self.__verifica(TOKENS[x])), False):
+        tipo = next((x.lower() for x in ('INT', 'BOOL', 'FLOAT', 'CHAR', 'STRING', 'VOID') if self.__verifica(TOKENS[x])), None)
+        if tipo is not None:
+            self.lexico.tipo_de_dato_actual = TIPOS[tipo]
             if en_funcion:
                 self.lexico.zona_de_codigo = Zonas.DEF_FUNCION
             self.__compara(self.complex.token)
@@ -127,6 +129,7 @@ class Sintactico(object):
 
     def ES_ARREGLO(self):
         if self.__verifica('['):
+            self.lexico.convertir_en_arreglo()
             self.__compara(self.complex.token)
             self.__compara(TOKENS['NUM'])
             self.__compara(']')
