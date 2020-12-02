@@ -60,7 +60,7 @@ class Simbolo(object):
 
 class Lexico(object):
     def __init__(self, codigo="", errores=ColeccionError()):
-        self.codigo = codigo + " "
+        self.codigo = codigo + " " 
         self.tabla_de_simbolos = []
         self.tabla_de_funciones = []
         self.indice = -1
