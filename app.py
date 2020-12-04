@@ -84,8 +84,15 @@ def compila_sintactico(*args, **kwargs):
     resultado['tabla_de_simbolos'] = [{
         'token': s.token,
         'lexema': s.lexema,
-        'codigo': s.codigo
+        'codigo': s.codigo,
+        'tipo': s.codigo_tipo,
     } for s in sintactico.lexico.tabla_de_simbolos]
+    resultado['tabla_de_funciones'] = [{
+        'token': s.token,
+        'lexema': s.lexema,
+        'codigo': s.codigo,
+        'tipo': s.codigo_tipo,
+    } for s in sintactico.lexico.tabla_de_funciones]
     resultado['errores'] = [
         {
             'tipo': error.tipo,

@@ -6,6 +6,7 @@ const vm = new Vue({
     tokens: [],
     errores: [],
     tablaSimbolos: [],
+    tablaFunciones: [],
     resultadoExpresion: false,
     resultadoPrograma: false,
     columnas: [
@@ -27,6 +28,11 @@ const vm = new Vue({
       {
         field: 'lexema',
         label: 'Lexema',
+        centered: true
+      },
+      {
+        field: 'tipo',
+        label: 'Tipo',
         centered: true
       }
     ],
@@ -70,7 +76,11 @@ const vm = new Vue({
       axios.post('/compila-sintactico/', { codigo: this.codigo }, ).then((response) => {
         this.resultadoPrograma = response.data.programa
         this.tablaSimbolos = response.data.tabla_de_simbolos.map(function(simbolo, indice) {
-          simbolo['id'] = indice + 1
+          simbolo['id'] = indice
+          return simbolo
+        })
+        this.tablaFunciones = response.data.tabla_de_funciones.map(function(simbolo, indice) {
+          simbolo['id'] = indice
           return simbolo
         })
         this.errores = response.data.errores.map(function(error, indice) {
