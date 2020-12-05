@@ -5,10 +5,8 @@
 {% endblock %}
 {% block content %}
   <h1 class="title">Analizador Lexico</h1>
-  <h2>Lenguajes y Automatas I</h2>
   <div class="columns">
     <div class="column is-6">
-      <h3>Codigo Fuente</h3>
       <b-field>
         <b-input type="textarea" v-model="codigo" @input="compila" placeholder="Codigo fuente" rows="10"></b-input>
       </b-field>
@@ -38,10 +36,24 @@
     </div>
     <div class="column is-6">
       <div v-if="tokens.length > 0">
-        <h3>Componentes Lexicos&nbsp;<b-tag type="is-primary"><% tokens.length || 0 %></b-tag></h3>
-        <div style="height: 600px; overflow-y: scroll; overflow-x: hidden;">
-          <b-table :data="tokens" :bordered="true" :striped="true" :narrowed="true" :hoverable="true" :mobile-cards="false" :columns="columnas"></b-table>
-        </div>
+        <b-tabs v-model="activeTab" type="is-boxed">
+          <b-tab-item>
+            <template #header>
+              <span>Componentes Lexicos&nbsp;<b-tag type="is-primary"><% tokens.length || 0 %></b-tag></span>
+            </template>
+            <div style="height: 600px; overflow-y: scroll; overflow-x: hidden;">
+              <b-table :data="tokens" :bordered="true" :striped="true" :narrowed="true" :hoverable="true" :mobile-cards="false" :columns="columnas"></b-table>
+            </div>
+          </b-tab-item>
+          <b-tab-item>
+            <template #header>
+              <span>Tabla de Simbolos&nbsp;<b-tag type="is-primary"><% tablaSimbolos.length || 0 %></b-tag></span>
+            </template>
+            <div style="height: 600px; overflow-y: scroll; overflow-x: hidden;">
+              <b-table :data="tablaSimbolos" :bordered="true" :striped="true" :narrowed="true" :hoverable="true" :mobile-cards="false" :columns="columnas"></b-table>
+            </div>
+          </b-tab-item>
+        </b-tabs>
       </div>
     </div>
   </div>
