@@ -14,6 +14,10 @@ def index(methods=('get',)):
 def expresion(methods=('get',)):
     return render_template('expresion.html')
 
+@app.route('/sintactico/')
+def sintactico(methods=('get',)):
+    return render_template('sintactico.html')
+
 @app.route('/tabla-de-simbolos/')
 def tabla_de_simbolos(*args, **kwargs):
     lexico = Lexico()
@@ -33,6 +37,7 @@ def compila(*args, **kwargs):
                 {
                     "token": componente_lexico.token,
                     "lexema": componente_lexico.lexema,
+                    "codigo": componente_lexico.codigo
                 }
             )
 
@@ -47,16 +52,47 @@ def compila(*args, **kwargs):
             'mensaje': e.mensaje
         } for e in lexico.errores
     ]
-
+    resultado['tabla_de_simbolos'] = [{
+        'token': s.token,
+        'lexema': s.lexema,
+        'codigo': s.codigo
+    } for s in lexico.tabla_de_simbolos]
     return (resultado, 200)
 
 @app.route('/compila-expresion/', methods=('post',))
 def compila_expresion(*args, **kwargs):
     json_data = json.loads(request.data)
     sintactico = Sintactico(codigo=json_data.get('codigo', ''))
-    #expresion = sintactico.EXPRESION()
-    expresion = sintactico.PROGRAMA()
+    expresion = sintactico.EXPRESION()
     resultado = {'expresion': expresion }
+    resultado['errores'] = [
+        {
+            'tipo': error.tipo,
+            'num_linea': error.num_linea,
+            'mensaje': error.mensaje
+        } for error in sintactico.errores.coleccion
+    ]
+    
+    return (resultado, 200)
+
+@app.route('/compila-sintactico/', methods=('post',))
+def compila_sintactico(*args, **kwargs):
+    json_data = json.loads(request.data)
+    sintactico = Sintactico(codigo=json_data.get('codigo', ''))
+    programa = sintactico.PROGRAMA()
+    resultado = {'programa': programa }
+    resultado['tabla_de_simbolos'] = [{
+        'token': s.token,
+        'lexema': s.lexema,
+        'codigo': s.codigo,
+        'tipo': s.codigo_tipo,
+    } for s in sintactico.lexico.tabla_de_simbolos]
+    resultado['tabla_de_funciones'] = [{
+        'token': s.token,
+        'lexema': s.lexema,
+        'codigo': s.codigo,
+        'tipo': s.codigo_tipo,
+    } for s in sintactico.lexico.tabla_de_funciones]
     resultado['errores'] = [
         {
             'tipo': error.tipo,
