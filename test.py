@@ -3,9 +3,9 @@ codigo = input('Ingresa una expresion: ')
 sin = Sintactico(codigo=codigo)
 
 if sin.PROGRAMA() and len(sin.errores.coleccion) == 0:
-    print('La Expresion es valida!')
+    print('Programa valido')
 
 else:
-    print('La Expresion es invalida!')
+    print('Programa invalido')
     for error in sin.errores.coleccion:
         print(error)
