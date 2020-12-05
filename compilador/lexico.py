@@ -9,23 +9,60 @@ PALABRAS_RESERVADAS = ('bool', 'call', 'char', 'do', 'else', 'float', 'for',
     'function', 'if', 'int', 'main', 'read', 'return', 'string', 'then', 'to',
     'void', 'while', 'write', 'false', 'true',)
 
+TIPOS = {
+    'void': 0,
+    'int': 1,
+    'bool': 2,
+    'float': 3,
+    'char': 4,
+    'string': 5
+}
+
 TOKENS = {constante: token for (token, constante) in enumerate(CONSTANTES, 256)}
+TOKENS_INV = {token: constante for (constante, token) in TOKENS.items()}
+TIPOS_INV = {val: key for (key, val) in TIPOS.items()}
+ARRAY_CONST = len(TIPOS)
 
 SIMBOLOS_PERMITIDOS = r"(){}[],;+-*/\%&|!"
 
 class Simbolo(object):
-    def __init__(self, token=None, lexema=None):
+    def __init__(self, token=None, lexema=None, tipo=None):
         self.token = token
         self.lexema = lexema
+        self.tipo = tipo
 
     def __repr__(self):
-        return f"{self.lexema} ({self.token})"
+        tipo = f': {self.codigo_tipo}' if self.tipo else ''
+        return f'{self.lexema} ({self.codigo}){tipo}'
 
+    @property
+    def codigo(self):
+        if self.token < 256:
+            return chr(self.token)
+
+        if self.token in TOKENS_INV:
+            return TOKENS_INV[self.token]
+        
+        raise ValueError('Valor invalido para token!')
+
+    @property
+    def codigo_tipo(self):
+        if self.tipo is None:
+            return '-'
+
+        if self.tipo >= 0 and self.tipo < ARRAY_CONST:
+            return TIPOS_INV[self.tipo]
+
+        if self.tipo < ARRAY_CONST * 2:
+            return f'{TIPOS_INV[self.tipo - ARRAY_CONST]} array'
+
+        raise ValueError('Valor invalido para tipo!')
 
 class Lexico(object):
     def __init__(self, codigo="", errores=ColeccionError()):
         self.codigo = codigo + " "
         self.tabla_de_simbolos = []
+        self.tabla_de_funciones = []
         self.indice = -1
         self.inicio_lexema = 0
         self.numero_de_linea = 1
@@ -34,11 +71,17 @@ class Lexico(object):
         self.caracter = self.codigo[0]
         self.lexema = ""
         self.token = None
+        self.zona_de_codigo = Zonas.DEF_VARIABLES_GLOBALES
+        self.fin_definicion_palabras_reservadas = None
+        self.fin_definicion_variables_globales = None
+        self.inicio_definicion_variables_locales = None
+        self.fin_definicion_variables_locales = None
+        self.tipo_de_dato_actual = None
         self.__errores = errores
         self.errores = self.__errores.coleccion
         self.__cargar_palabras_reservadas()
 
-    def inserta_simbolo(self, simbolo=None, token=None, lexema=None):
+    def inserta_simbolo(self, simbolo=None, token=None, lexema=None, tipo=None):
         """
         Inserta un simbolo en la tabla de simbolos. Puede aceptar un simbolo,
         o bien, un token y lexema.
@@ -47,17 +90,68 @@ class Lexico(object):
             self.tabla_de_simbolos.append(simbolo)
 
         elif token and lexema:
-            self.tabla_de_simbolos.append(Simbolo(token=token, lexema=lexema))
+            self.tabla_de_simbolos.append(Simbolo(token=token, lexema=lexema, tipo=tipo))
 
         else:
-            raise Exception("Debe proveer un Simbolo, o bien token y lexema!")
+            raise ValueError("Debe proveer un Simbolo, o bien token y lexema!")
+
+    def inserta_funcion(self, simbolo=None, lexema=None, tipo=None):
+        """
+        Inserta un identificador en la tabla de funciones. Puede aceptar un simbolo,
+        o bien, un lexema.
+        """
+        if simbolo:
+            self.tabla_de_funciones.append(simbolo)
+
+        elif lexema:
+            self.tabla_de_simbolos.append(Simbolo(token=TOKENS['ID'], lexema=lexema, tipo=tipo))
+
+        else:
+            raise ValueError("Debe proveer un Simbolo, o bien un lexema!")
 
     def __buscar_simbolo(self, lexema=''):
         """
         Recibe un lexema y busca un simbolo que coincida con el lexema en la
         tabla de simbolos.
         """
-        return next((s for s in self.tabla_de_simbolos if s.lexema == lexema), None)
+        if self.zona_de_codigo == Zonas.DEF_VARIABLES_GLOBALES:    
+            return next((s for s in self.tabla_de_simbolos if s.lexema == lexema), None)
+
+        elif self.zona_de_codigo == Zonas.DEF_FUNCION:
+            simbolo = next((s for s in self.tabla_de_simbolos[self.fin_definicion_palabras_reservadas:] if s.lexema == lexema), None)
+            if simbolo is not None:
+                return simbolo
+
+            else:
+                return next((s for s in self.tabla_de_funciones if s.lexema == lexema), None)
+
+        elif self.zona_de_codigo == Zonas.DEF_VARIABLES_LOCALES:
+            simbolo = next((s for s in self.tabla_de_simbolos[self.inicio_definicion_variables_locales:] if s.lexema == lexema), None)
+            if simbolo is not None:
+                return simbolo
+
+            else:
+                return next((s for s in self.tabla_de_simbolos[:self.fin_definicion_palabras_reservadas] if s.lexema == lexema), None)
+
+        elif self.zona_de_codigo == Zonas.CUERPO_FUNCION_LOCAL:
+            simbolo = next((s for s in self.tabla_de_simbolos[self.inicio_definicion_variables_locales:] if s.lexema == lexema), None)
+            if simbolo is not None:
+                return simbolo
+
+            simbolo = next((s for s in self.tabla_de_funciones if s.lexema == lexema), None)
+            if simbolo is not None:
+                return simbolo
+
+            else:
+                return next((s for s in self.tabla_de_simbolos[:self.fin_definicion_variables_globales] if s.lexema == lexema), None)
+
+        else:
+            simbolo =  next((s for s in self.tabla_de_simbolos[:self.fin_definicion_variables_globales] if s.lexema == lexema), None)
+            if simbolo is not None:
+                return simbolo
+
+            else:
+                return next((s for s in self.tabla_de_funciones if s.lexema == lexema), None)
 
     def __siguiente_caracter(self):
         """
@@ -88,6 +182,7 @@ class Lexico(object):
                 ),
             PALABRAS_RESERVADAS)
         )
+        self.marcar_posicion(posicion='fin_definicion_palabras_reservadas')
 
     def siguiente_componente_lexico(self):
         """
@@ -173,9 +268,50 @@ class Lexico(object):
                 self.__retrocede_indice()
                 lexema = self.__leer_lexema()
                 simbolo = self.__buscar_simbolo(lexema=lexema)
-                if simbolo is None:
-                    simbolo = Simbolo(token=TOKENS['ID'], lexema=lexema)
-                    self.inserta_simbolo(simbolo=simbolo)
+                if self.zona_de_codigo in (Zonas.DEF_VARIABLES_GLOBALES, Zonas.DEF_VARIABLES_LOCALES,):
+                    if simbolo is None:
+                        simbolo = Simbolo(token=TOKENS['ID'], lexema=lexema, tipo=self.tipo_de_dato_actual)
+                        if simbolo.tipo == TIPOS['void']:
+                            self.__errores.agregar(
+                            Error(
+                                tipo='SEMANTICO',
+                                num_linea=self.numero_de_linea,
+                                mensaje=f"No es posible definir una variable de tipo 'void'."
+                            )
+                        )
+                        self.inserta_simbolo(simbolo=simbolo)
+
+                    elif simbolo.token == TOKENS['ID']:
+                        self.__errores.agregar(
+                            Error(
+                                tipo='SEMANTICO',
+                                num_linea=self.numero_de_linea,
+                                mensaje=f"La variable: '{lexema}' ya esta definida en el ambito actual."
+                            )
+                        )
+                elif self.zona_de_codigo == Zonas.DEF_FUNCION:
+                    if simbolo is None:
+                        simbolo = Simbolo(token=TOKENS['ID'], lexema=lexema, tipo=self.tipo_de_dato_actual)
+                        self.inserta_funcion(simbolo=simbolo)
+
+                    else:
+                        self.__errores.agregar(
+                            Error(
+                                tipo='SEMANTICO',
+                                num_linea=self.numero_de_linea,
+                                mensaje=f"Ya existe una variable o funcion llamada: '{lexema}'."
+                            )
+                        )
+
+                else:
+                    if simbolo is None:
+                        self.__errores.agregar(
+                            Error(
+                                tipo='SEMANTICO',
+                                num_linea=self.numero_de_linea,
+                                mensaje=f"La variable: '{lexema}' no esta definida."
+                            )
+                        )
 
                 return simbolo
 
@@ -344,9 +480,8 @@ class Lexico(object):
             elif self.estado == 33:
                 caracter = self.__siguiente_caracter()
                 if caracter == '\n' or caracter is None:
-                    #Agregaba líneas innecesariamente.
-                    #if caracter == '\n':
-                        #self.numero_de_linea += 1
+                    if caracter == '\n':
+                        self.numero_de_linea += 1
 
                     self.estado = 34
 
@@ -463,3 +598,18 @@ class Lexico(object):
             self.inicio = 40
 
         return self.inicio
+
+    def marcar_posicion(self, posicion=None):
+        if hasattr(self, posicion):
+            setattr(self, posicion, len(self.tabla_de_simbolos))
+
+    def convertir_en_arreglo(self):
+        self.tabla_de_simbolos[-1].tipo += ARRAY_CONST
+
+
+class Zonas:
+    DEF_VARIABLES_GLOBALES = 0
+    DEF_FUNCION = 1
+    DEF_VARIABLES_LOCALES = 2
+    CUERPO_FUNCION_LOCAL = 3
+    CUERPO_PRINCIPAL = 4
