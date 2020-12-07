@@ -32,7 +32,7 @@ def compila(*args, **kwargs):
     componentes_lexicos = []
     while True:
         componente_lexico = lexico.siguiente_componente_lexico()
-        if componente_lexico:
+        if componente_lexico: 
             componentes_lexicos.append(
                 {
                     "token": componente_lexico.token,

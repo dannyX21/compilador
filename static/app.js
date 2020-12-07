@@ -36,7 +36,7 @@ const vm = new Vue({
         centered: true
       }
     ],
-    activeTab: 0
+    activeTab: 0 
   },
   computed: {
     expresionValida() {
