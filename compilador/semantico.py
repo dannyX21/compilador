@@ -117,7 +117,9 @@ DIFERENTE=(
 
 
 class Semantico():
-
+    temporal=(-1)
+    etiqueta=(-1)
+    
     def __init__(self):
         self.stack=[]
 
@@ -140,7 +142,6 @@ def generar_temporal():
     return("_tmp"+repr(Semantico.temporal))
 
 @staticmethod
-
 def generar_etiqueta():
     Semantico.etiqueta +=1
     return("_Lb1"+repr(Semantico.etiqueta))
