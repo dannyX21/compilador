@@ -20,6 +20,4 @@ class Semantico:
     def generar_etiqueta():
 	
         Semantico.etiquetas +=1
-        return("_Lbl"+repr(Semantico.etiquetas))
-		
-		
+        return("_Lbl"+repr(Semantico.etiquetas))	
