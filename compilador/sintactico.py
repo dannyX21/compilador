@@ -1,11 +1,13 @@
 from compilador.lexico import Lexico, TOKENS, TOKENS_INV, Zonas, TIPOS
 from compilador.errores import Error, ColeccionError
+from compilador.semantico import Semantico
 
 class Sintactico(object):
     def __init__(self, codigo=''):
         self.errores = ColeccionError()
         self.lexico = Lexico(codigo=codigo, errores=self.errores)
         self.complex = self.siguiente_componente_lexico()
+        self.semantico = Semantico()
 
     def siguiente_componente_lexico(self):
         self.complex = self.lexico.siguiente_componente_lexico()
@@ -257,7 +259,10 @@ class Sintactico(object):
     def ASIGNACION(self):
         if self.DESTINO():
             self.__compara(TOKENS['IGU'])
+            TAC = self.semantico.pop() + " := "
             if self.FUENTE():
+                TAC += self.semantico.pop()
+                self.semantico.agregar_codigo_intermedio(TAC)
                 self.__compara(';')
                 return True
 
@@ -265,6 +270,7 @@ class Sintactico(object):
 
     def DESTINO(self):
         if self.__verifica(TOKENS['ID']):
+            self.semantico.push(self.complex.lexema)
             self.__compara(self.complex.token)
             if self.ELEMENTO_ARREGLO():
                 return True
@@ -411,7 +417,12 @@ class Sintactico(object):
     def EXPRESION(self):
         if self.__verifica('('):
             self.__compara('(')
+            temp = self.semantico.generar_temporal()
+            TAC = f'{temp} := '
             if self.EXPRESION():
+                TAC += self.semantico.pop()
+                self.semantico.agregar_codigo_intermedio(TAC)
+                self.semantico.push(temp)
                 self.__compara(')')
                 return True
 
@@ -435,8 +446,14 @@ class Sintactico(object):
 
     def EXPRESION_LOGICA_PRIMA(self):
         if self.__verifica('|') or self.__verifica('&'):
+            operador = self.complex.lexema
+            temp = self.semantico.generar_temporal()
+            TAC = f'{temp} := {self.semantico.pop()} {operador} '
             self.__compara(self.complex.token)
             if self.TERMINO_LOGICO():
+                TAC += self.semantico.pop()
+                self.semantico.agregar_codigo_intermedio(TAC)
+                self.semantico.push(temp)
                 if self.EXPRESION_LOGICA_PRIMA():
                     return True
 
@@ -450,7 +467,12 @@ class Sintactico(object):
         if self.__verifica('!'):
             self.__compara('!')
             self.__compara('(')
+            temp = self.semantico.generar_temporal()
+            TAC = f'{temp} := ! '
             if self.EXPRESION_LOGICA() or self.EXPRESION_RELACIONAL():
+                TAC += self.semantico.pop()
+                self.semantico.agregar_codigo_intermedio(TAC)
+                self.semantico.push(temp)
                 self.__compara(')')
                 return True
 
@@ -475,8 +497,14 @@ class Sintactico(object):
 
     def EXPRESION_RELACIONAL_PRIMA(self):
         if next((True for operador in ('MEN', 'MEI', 'IGU', 'DIF', 'MAI', 'MAY') if self.__verifica(TOKENS[operador])), False):
+            operador = self.complex.lexema
+            temp = self.semantico.generar_temporal()
+            TAC = f'{temp} := {self.semantico.pop()} {operador} '
             self.__compara(self.complex.token)
             if self.EXPRESION_ARITMETICA():
+                TAC += self.semantico.pop()
+                self.semantico.agregar_codigo_intermedio(TAC)
+                self.semantico.push(temp)
                 if self.EXPRESION_RELACIONAL_PRIMA():
                     return True
 
@@ -501,8 +529,14 @@ class Sintactico(object):
 
     def EXPRESION_ARITMETICA_PRIMA(self):
         if self.__verifica('+') or self.__verifica('-'):
+            operador = self.complex.lexema
+            temp = self.semantico.generar_temporal()
+            TAC = f'{temp} := {self.semantico.pop()} {operador} '
             self.__compara(self.complex.token)
             if self.TERMINO_ARITMETICO():
+                TAC += self.semantico.pop()
+                self.semantico.agregar_codigo_intermedio(TAC)
+                self.semantico.push(temp)
                 if self.EXPRESION_ARITMETICA_PRIMA():
                     return True
 
@@ -526,8 +560,14 @@ class Sintactico(object):
 
     def TERMINO_ARITMETICO_PRIMA(self):
         if next((True for operador in ('/*%\\') if self.__verifica(operador)), False):
+            operador = self.complex.lexema
+            temp = self.semantico.generar_temporal()
+            TAC = f'{temp} := {self.semantico.pop()} {operador} '
             self.__compara(self.complex.token)
             if self.FACTOR_ARITMETICO():
+                TAC += self.semantico.pop()
+                self.semantico.agregar_codigo_intermedio(TAC)
+                self.semantico.push(temp)
                 if self.TERMINO_ARITMETICO_PRIMA():
                     return True
 
@@ -552,8 +592,9 @@ class Sintactico(object):
         return False
 
     def OPERANDO(self):
-        if next((True for operador in ('NUM', 'NUMF', 'CONST_CHAR', 'CONST_STRING', 'TRUE', 'FALSE')\
-            if self.__verifica(TOKENS[operador])), False):
+        if next((True for operador in ('NUM', 'NUMF', 'CONST_CHAR', 'CONST_STRING', 'TRUE', 'FALSE')
+                 if self.__verifica(TOKENS[operador])), False):
+            self.semantico.push(self.complex.lexema)
             self.__compara(self.complex.token)
             return True
 
