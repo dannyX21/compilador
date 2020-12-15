@@ -49,6 +49,23 @@
       <b-tabs v-model="activeTab" type="is-boxed">
         <b-tab-item>
           <template #header>
+            <span>Codigo Intermedio&nbsp;<b-tag type="is-primary"><% codigoIntermedio.length || 0 %></b-tag></span>
+          </template>
+          <div style="height: 600px; overflow-y: scroll; overflow-x: hidden;" class="is-centered">
+            <table class="table is-striped is-hoverable is-bordered is-narrow is-fullwidth" v-if="codigoIntermedio.length > 0">
+              <tr>
+                <th scope="col">Codigo Intermedio</th>
+              </tr>
+              <tr v-for="(line, index) in codigoIntermedio" :key="index">
+                <td>
+                  <% line %>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </b-tab-item>
+        <b-tab-item>
+          <template #header>
             <span>Tabla de Simbolos&nbsp;<b-tag type="is-primary"><% tablaSimbolos.length || 0 %></b-tag></span>
           </template>
           <div style="height: 600px; overflow-y: scroll; overflow-x: hidden;">

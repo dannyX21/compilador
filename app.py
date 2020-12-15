@@ -93,6 +93,7 @@ def compila_sintactico(*args, **kwargs):
         'codigo': s.codigo,
         'tipo': s.codigo_tipo,
     } for s in sintactico.lexico.tabla_de_funciones]
+    resultado['codigo_intermedio'] = sintactico.semantico.codigo_intermedio
     resultado['errores'] = [
         {
             'tipo': error.tipo,

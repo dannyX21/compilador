@@ -32,6 +32,7 @@ class Semantico():
     __indice_temp, __indice_etiqueta = 0, 0
     def __init__(self):
         self.pila = []
+        self.pila_etiquetas = []
         self.codigo_intermedio = []
 
     @staticmethod
@@ -55,6 +56,19 @@ class Semantico():
     def pop(self):
         try:
             return self.pila.pop()
+
+        except IndexError:
+            raise IndexError('La pila esta vacia.')
+
+    def push_etiqueta(self, elemento):
+        if not isinstance(elemento, str):
+            raise TypeError('El elemento debe ser un string.')
+
+        self.pila_etiquetas.append(elemento)
+
+    def pop_etiqueta(self):
+        try:
+            return self.pila_etiquetas.pop()
 
         except IndexError:
             raise IndexError('La pila esta vacia.')

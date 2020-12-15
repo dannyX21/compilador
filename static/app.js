@@ -7,6 +7,7 @@ const vm = new Vue({
     errores: [],
     tablaSimbolos: [],
     tablaFunciones: [],
+    codigoIntermedio: [],
     resultadoExpresion: false,
     resultadoPrograma: false,
     columnas: [
@@ -83,6 +84,7 @@ const vm = new Vue({
           simbolo['id'] = indice
           return simbolo
         })
+        this.codigoIntermedio = response.data['codigo_intermedio']
         this.errores = response.data.errores.map(function(error, indice) {
           error['id'] = indice + 1
           return error

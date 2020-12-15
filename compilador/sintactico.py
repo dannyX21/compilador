@@ -303,6 +303,10 @@ class Sintactico(object):
             if self.EXPRESION():
                 self.__compara(')')
                 self.__compara(TOKENS['THEN'])
+                self.semantico.agregar_codigo_intermedio(f'CMP {self.semantico.pop()}')
+                etiqueta = self.semantico.generar_etiqueta()
+                self.semantico.agregar_codigo_intermedio(f'JZ {etiqueta}')
+                self.semantico.push_etiqueta(etiqueta)
                 if self.ORDEN():
                     if self.TIENE_ELSE():
                         return True
@@ -317,12 +321,23 @@ class Sintactico(object):
 
     def TIENE_ELSE(self):
         if self.__verifica(TOKENS['ELSE']):
+            etiqueta_else = self.semantico.pop_etiqueta()
+            etiqueta_fin = self.semantico.generar_etiqueta()
+            self.semantico.push_etiqueta(etiqueta_fin)
+            self.semantico.agregar_codigo_intermedio(f'JMP {etiqueta_fin}')
+            self.semantico.agregar_codigo_intermedio(f'{etiqueta_else}:')
             self.__compara(self.complex.token)
             if self.ORDEN():
+                etiqueta_fin = self.semantico.pop_etiqueta()
+                self.semantico.agregar_codigo_intermedio(f'{etiqueta_fin}:')
                 return True
 
             self.__agregar_error(tipo='SINTACTICO', mensaje='Se esperaba una orden')
             return False
+
+        else:
+            etiqueta_fin = self.semantico.pop_etiqueta()
+            self.semantico.agregar_codigo_intermedio(f'{etiqueta_fin}:')
         
         return True
 
@@ -348,11 +363,18 @@ class Sintactico(object):
 
         elif self.__verifica(TOKENS['WHILE']):
             self.__compara(self.complex.token)
+            etiqueta_condicion = self.semantico.generar_etiqueta()
+            self.semantico.agregar_codigo_intermedio(f'{etiqueta_condicion}:')
             self.__compara('(')
             if self.EXPRESION_LOGICA():
+                self.semantico.agregar_codigo_intermedio(f'CMP {self.semantico.pop()}')
+                etiqueta_fin = self.semantico.generar_etiqueta()
+                self.semantico.agregar_codigo_intermedio(f'JZ {etiqueta_fin}')
                 self.__compara(')')
                 self.__compara(TOKENS['DO'])
                 if self.ORDEN():
+                    self.semantico.agregar_codigo_intermedio(f'JMP {etiqueta_condicion}')
+                    self.semantico.agregar_codigo_intermedio(f'{etiqueta_fin}:')
                     return True
 
                 else:
@@ -393,6 +415,7 @@ class Sintactico(object):
             self.__compara(self.complex.token)
             self.__compara('(')
             if self.EXPRESION():
+                self.semantico.agregar_codigo_intermedio(f'OUT {self.semantico.pop()}')
                 self.__compara(')')
                 self.__compara(';')
                 return True
