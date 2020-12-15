@@ -1,11 +1,13 @@
-from compilador.lexico import Lexico, TOKENS, TOKENS_INV
+from compilador.lexico import Lexico, TOKENS, TOKENS_INV, Zonas, TIPOS
 from compilador.errores import Error, ColeccionError
+from compilador.semantico import Semantico
 
 class Sintactico(object):
     def __init__(self, codigo=''):
         self.errores = ColeccionError()
         self.lexico = Lexico(codigo=codigo, errores=self.errores)
         self.complex = self.siguiente_componente_lexico()
+        self.semantico = Semantico()
 
     def siguiente_componente_lexico(self):
         self.complex = self.lexico.siguiente_componente_lexico()
@@ -22,7 +24,6 @@ class Sintactico(object):
         elif not isinstance(token, int):
             raise ValueError()
 
-        # print(f'{self.complex.token} == {token}? {self.complex.token == token}')
         if self.complex is not None:
             return self.complex.token == token
 
@@ -87,8 +88,12 @@ class Sintactico(object):
 
         return False
 
-    def TIPO(self):
-        if next((True for x in ('INT', 'BOOL', 'FLOAT', 'CHAR', 'STRING', 'VOID') if self.__verifica(TOKENS[x])), False):
+    def TIPO(self, en_funcion=False):
+        tipo = next((x.lower() for x in ('INT', 'BOOL', 'FLOAT', 'CHAR', 'STRING', 'VOID') if self.__verifica(TOKENS[x])), None)
+        if tipo is not None:
+            self.lexico.tipo_de_dato_actual = TIPOS[tipo]
+            if en_funcion:
+                self.lexico.zona_de_codigo = Zonas.DEF_FUNCION
             self.__compara(self.complex.token)
             return True
 
@@ -126,6 +131,7 @@ class Sintactico(object):
 
     def ES_ARREGLO(self):
         if self.__verifica('['):
+            self.lexico.convertir_en_arreglo()
             self.__compara(self.complex.token)
             self.__compara(TOKENS['NUM'])
             self.__compara(']')
@@ -160,15 +166,24 @@ class Sintactico(object):
     def FUNCION(self):
         if self.__verifica(TOKENS['FUNCTION']):
             self.__compara(self.complex.token)
-            if self.TIPO():
+            if self.lexico.fin_definicion_variables_globales is None:
+                self.lexico.marcar_posicion(posicion='fin_definicion_variables_globales')
+
+            if self.TIPO(en_funcion=True):
                 self.__compara(TOKENS['ID'])
+                self.lexico.zona_de_codigo = Zonas.DEF_VARIABLES_LOCALES
+                self.lexico.marcar_posicion(posicion='inicio_definicion_variables_locales')
                 self.__compara('(')
                 if self.PARAMETROS_FORMALES():
                     self.__compara(')')
                     if self.DEFINIR_VARIABLES():
+                        self.lexico.marcar_posicion(posicion='fin_definicion_variables_locales')
+                        self.lexico.zona_de_codigo = Zonas.CUERPO_FUNCION_LOCAL
                         if self.CUERPO_FUNCION():
+                            self.lexico.zona_de_codigo = Zonas.DEF_VARIABLES_GLOBALES
                             return True
 
+        self.lexico.zona_de_codigo = Zonas.DEF_VARIABLES_GLOBALES
         return False
 
     def PARAMETROS_FORMALES(self):
@@ -244,7 +259,10 @@ class Sintactico(object):
     def ASIGNACION(self):
         if self.DESTINO():
             self.__compara(TOKENS['IGU'])
+            TAC = self.semantico.pop() + " := "
             if self.FUENTE():
+                TAC += self.semantico.pop()
+                self.semantico.agregar_codigo_intermedio(TAC)
                 self.__compara(';')
                 return True
 
@@ -252,6 +270,7 @@ class Sintactico(object):
 
     def DESTINO(self):
         if self.__verifica(TOKENS['ID']):
+            self.semantico.push(self.complex.lexema)
             self.__compara(self.complex.token)
             if self.ELEMENTO_ARREGLO():
                 return True
@@ -398,7 +417,12 @@ class Sintactico(object):
     def EXPRESION(self):
         if self.__verifica('('):
             self.__compara('(')
+            temp = self.semantico.generar_temporal()
+            TAC = f'{temp} := '
             if self.EXPRESION():
+                TAC += self.semantico.pop()
+                self.semantico.agregar_codigo_intermedio(TAC)
+                self.semantico.push(temp)
                 self.__compara(')')
                 return True
 
@@ -422,8 +446,14 @@ class Sintactico(object):
 
     def EXPRESION_LOGICA_PRIMA(self):
         if self.__verifica('|') or self.__verifica('&'):
+            operador = self.complex.lexema
+            temp = self.semantico.generar_temporal()
+            TAC = f'{temp} := {self.semantico.pop()} {operador} '
             self.__compara(self.complex.token)
             if self.TERMINO_LOGICO():
+                TAC += self.semantico.pop()
+                self.semantico.agregar_codigo_intermedio(TAC)
+                self.semantico.push(temp)
                 if self.EXPRESION_LOGICA_PRIMA():
                     return True
 
@@ -437,7 +467,12 @@ class Sintactico(object):
         if self.__verifica('!'):
             self.__compara('!')
             self.__compara('(')
+            temp = self.semantico.generar_temporal()
+            TAC = f'{temp} := ! '
             if self.EXPRESION_LOGICA() or self.EXPRESION_RELACIONAL():
+                TAC += self.semantico.pop()
+                self.semantico.agregar_codigo_intermedio(TAC)
+                self.semantico.push(temp)
                 self.__compara(')')
                 return True
 
@@ -462,8 +497,14 @@ class Sintactico(object):
 
     def EXPRESION_RELACIONAL_PRIMA(self):
         if next((True for operador in ('MEN', 'MEI', 'IGU', 'DIF', 'MAI', 'MAY') if self.__verifica(TOKENS[operador])), False):
+            operador = self.complex.lexema
+            temp = self.semantico.generar_temporal()
+            TAC = f'{temp} := {self.semantico.pop()} {operador} '
             self.__compara(self.complex.token)
             if self.EXPRESION_ARITMETICA():
+                TAC += self.semantico.pop()
+                self.semantico.agregar_codigo_intermedio(TAC)
+                self.semantico.push(temp)
                 if self.EXPRESION_RELACIONAL_PRIMA():
                     return True
 
@@ -488,8 +529,14 @@ class Sintactico(object):
 
     def EXPRESION_ARITMETICA_PRIMA(self):
         if self.__verifica('+') or self.__verifica('-'):
+            operador = self.complex.lexema
+            temp = self.semantico.generar_temporal()
+            TAC = f'{temp} := {self.semantico.pop()} {operador} '
             self.__compara(self.complex.token)
             if self.TERMINO_ARITMETICO():
+                TAC += self.semantico.pop()
+                self.semantico.agregar_codigo_intermedio(TAC)
+                self.semantico.push(temp)
                 if self.EXPRESION_ARITMETICA_PRIMA():
                     return True
 
@@ -513,8 +560,14 @@ class Sintactico(object):
 
     def TERMINO_ARITMETICO_PRIMA(self):
         if next((True for operador in ('/*%\\') if self.__verifica(operador)), False):
+            operador = self.complex.lexema
+            temp = self.semantico.generar_temporal()
+            TAC = f'{temp} := {self.semantico.pop()} {operador} '
             self.__compara(self.complex.token)
             if self.FACTOR_ARITMETICO():
+                TAC += self.semantico.pop()
+                self.semantico.agregar_codigo_intermedio(TAC)
+                self.semantico.push(temp)
                 if self.TERMINO_ARITMETICO_PRIMA():
                     return True
 
@@ -539,8 +592,9 @@ class Sintactico(object):
         return False
 
     def OPERANDO(self):
-        if next((True for operador in ('NUM', 'NUMF', 'CONST_CHAR', 'CONST_STRING', 'TRUE', 'FALSE')\
-            if self.__verifica(TOKENS[operador])), False):
+        if next((True for operador in ('NUM', 'NUMF', 'CONST_CHAR', 'CONST_STRING', 'TRUE', 'FALSE')
+                 if self.__verifica(TOKENS[operador])), False):
+            self.semantico.push(self.complex.lexema)
             self.__compara(self.complex.token)
             return True
 
@@ -604,6 +658,10 @@ class Sintactico(object):
     def PRINCIPAL(self):
         if self.__verifica(TOKENS['MAIN']):
             self.__compara(self.complex.token)
+            if self.lexico.fin_definicion_variables_globales is None:
+                self.lexico.marcar_posicion(posicion='fin_definicion_variables_globales')
+
+            self.lexico.zona_de_codigo = Zonas.CUERPO_PRINCIPAL
             self.__compara('(')
             if self.PARAMETROS_FORMALES():
                 self.__compara(')')
